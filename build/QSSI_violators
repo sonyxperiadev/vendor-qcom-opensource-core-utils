@@ -6,7 +6,7 @@
 
 QSSI_WHITELIST_FILE="$QCPATH/release/QSSI/QSSI_whitelist.txt"
 QSSI_ENFORCED_FILE="$QCPATH/release/QSSI/QSSI_enforced_projects.txt"
-QSSI_VIOLATORS_OUTPUT_FILE="QSSI_violators.txt"
+QSSI_VIOLATORS_OUTPUT_FILE="$OUT/QSSI_violators.txt"
 
 ninja_split()
 {
@@ -85,94 +85,38 @@ while test $# -gt 0; do
     esac
 done
 
+if [ ! -f $QSSI_ENFORCED_FILE ] | [ ! -f $QSSI_WHITELIST_FILE ] ; then
+    echo 'QSSI: not enforced for this target'
+    exit 0
+fi
+
 # Generate the ninja-split files if they do not exist
-if [ ! -f qssi-system.txt ]; then
-    ninja_split system $1 qssi-system.txt
+if [ ! -f $OUT/qssi-system.txt ]; then
+    ninja_split system $1 $OUT/qssi-system.txt
 fi
-if [ ! -f qssi-vendor.txt ]; then
-    ninja_split vendor $1 qssi-vendor.txt
+if [ ! -f $OUT/qssi-vendor.txt ]; then
+    ninja_split vendor $1 $OUT/qssi-vendor.txt
 fi
-if [ ! -f qssi-root.txt ]; then
-    ninja_split root $1 qssi-root.txt
+if [ ! -f $OUT/qssi-root.txt ]; then
+    ninja_split root $1 $OUT/qssi-root.txt
 fi
 
-# Generate QSSI_whitelist.txt if it does not exist or find violators based on component name given.
-if [ ! -f $QSSI_WHITELIST_FILE ] || [ "$#" -gt 1 ]; then
-    rm -f violators.txt
-    if [ ! -f $QSSI_WHITELIST_FILE ]; then
-        printf "\nNo QSSI_whitelist.txt file found. Creating from the QSSI violators list ...\n"
-        echo "Creating QSSI violators list ..."
-    else
-        printf "\nFinding QSSI violators for %s component ...\n" "$2"
-    fi
-    echo "    Parsing default.xml for projects ..."
-    if [ "$#" -gt 1 ]; then
-        awk -v FS="[=]" -v comp=$2 '/dest-branch/ { a = match($2,comp); next; next; } a && /path/ {a = 0; print substr($2,2,length($2)-2)}' .repo/manifests/default.xml > parse_def_xml.tmp
-    else
-        awk -v FS="[=]" '/dest-branch/ { a = 1; next; next; } a && /path/ {a = 0; print substr($2,2,length($2)-2)}' .repo/manifests/default.xml > parse_def_xml.tmp
-    fi
-
-    echo "    Finding desired projects in vendor ..."
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) printf ("%s\n",i)}}' parse_def_xml.tmp qssi-vendor.txt | awk '!x[$0]++' > projects_in_vendor.tmp
-
-    echo "    Finding desired projects in system ..."
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) printf ("%s\n",i)}}' parse_def_xml.tmp qssi-system.txt | awk '!x[$0]++' > projects_in_system.tmp
-
-    echo "    Finding desired projects in root ..."
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) printf ("%s\n",i)}}' parse_def_xml.tmp qssi-root.txt | awk '!x[$0]++' > projects_in_root.tmp
-
-    echo "    Finding common projects between system and vendor ..."
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) print i}}' projects_in_vendor.tmp projects_in_system.tmp | awk '!x[$0]++' > common_projects_system_vendor.tmp
-
-    echo "    Finding common projects between root and vendor ..."
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) print i}}' projects_in_vendor.tmp projects_in_root.tmp | awk '!x[$0]++' > common_projects_root_vendor.tmp
-
-    echo "    Finding files from common projects in system ..."
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) {printf("%s\n",$0);}}}' common_projects_system_vendor.tmp qssi-system.txt | awk '!x[$0]++' >> violators.txt
-
-    echo "    Finding files from common projects in root ..."
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) {printf("%s\n",$0);}}}' common_projects_root_vendor.tmp qssi-root.txt | awk '!x[$0]++' >> violators.txt
-
-    echo "    Finding uncommon projects in system from vendor ..."
-    awk -v count=0 -v ctr=0 'ARGV[1] == FILENAME{a[$0];count++; next} {for (i in a) {if(i != $0) ctr++;}}{if(count == ctr) { if(match($1,qcom)) print $0;} ctr=0;}' projects_in_vendor.tmp projects_in_system.tmp > projects_in_system_but_not_in_vendor.tmp
-
-    echo "    Populating files from the uncommon projects"
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) {print $0}}}' projects_in_system_but_not_in_vendor.tmp qssi-system.txt | awk '!x[$0]++' >> violators.txt
-
-    echo "    Finding uncommon projects in root from vendor ..."
-    awk -v count=0 -v ctr=0 'ARGV[1] == FILENAME{a[$0];count++; next} {for (i in a) {if(i != $0) ctr++;}}{if(count == ctr) {print $0;} ctr=0;}' projects_in_vendor.tmp projects_in_root.tmp > projects_in_root_but_not_in_vendor.tmp
-
-    echo "    Populating files from the uncommon projects"
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) {print $0}}}' projects_in_root_but_not_in_vendor.tmp qssi-system.txt | awk '!x[$0]++' >> violators.txt
-
-fi
 
 # Search for violators based on QSSI_enforced_projects.txt and QSSI_whitelist.txt or based on component-name
 if [ "$#" -eq 1 ]; then
-    if [ ! -f $QSSI_WHITELIST_FILE ]; then
-        echo "Creating QSSI_whitelist.txt ..."
-        # For now, create QSSI_whitelist.txt from violators.txt if not found
-        mv violators.txt QSSI_whitelist.txt
-    fi
-    if [ ! -f $QSSI_ENFORCED_FILE ]; then
-        # For now, create enforced_projects.txt if not found
-        echo "No QSSI_enforced_projects.txt file found. Creating an empty one ..."
-        touch $QSSI_ENFORCED_FILE
-    fi
+    printf "\nQSSI: Finding QSSI violators based on QSSI_whitelist.txt and QSSI_enforced_projects.txt...\n"
 
-    printf "\nFinding QSSI violators based on QSSI_whitelist.txt and QSSI_enforced_projects.txt ...\n"
-
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) print $0}}' $QSSI_ENFORCED_FILE qssi-system.txt | awk '!x[$0]++' > violators.tmp
+    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) print $0}}' $QSSI_ENFORCED_FILE $OUT/qssi-system.txt | awk '!x[$0]++' > violators.tmp
     awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(i == $0){c++}} if (c==0) {c=1; print $0} c=0;}' $QSSI_WHITELIST_FILE violators.tmp | awk '!x[$0]++' > $QSSI_VIOLATORS_OUTPUT_FILE
 
     if [ ! -s $QSSI_VIOLATORS_OUTPUT_FILE ]; then
-        printf "\nNo QSSI violators found !\n\n"
+        printf "\nQSSI: no QSSI violators found !\n\n"
     else
-        printf "\nQSSI violators are:\n"
+        printf "\nQSSI: violators are:\n"
         printf "Start-->\n"
         cat $QSSI_VIOLATORS_OUTPUT_FILE
         printf "<--End\n\n"
-        printf "QSSI violators also written to %s top level build directory\n\n" "$QSSI_VIOLATORS_OUTPUT_FILE"
+        printf "QSSI: violators also written to %s\n\n" "$QSSI_VIOLATORS_OUTPUT_FILE"
     fi
 else
     printf "\n\nFinding QSSI violators ...\n\n"
