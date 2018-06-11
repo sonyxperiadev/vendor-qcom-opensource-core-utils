@@ -8,10 +8,29 @@ QSSI_WHITELIST_FILE="$QCPATH/release/QSSI/QSSI_whitelist.txt"
 QSSI_ENFORCED_FILE="$QCPATH/release/QSSI/QSSI_enforced_projects.txt"
 QSSI_VIOLATORS_OUTPUT_FILE="$OUT/QSSI_violators.txt"
 
+AWK=`which awk`
+AWK=${AWK:-awk}
+CAT=`which cat`
+CAT=${CAT:-cat}
+ECHO=`which echo`
+ECHO=${ECHO:-echo}
+GREP=`which grep`
+GREP=${GREP:-grep}
+MV=`which mv`
+MV=${MV:-mv}
+RM=`which rm`
+RM=${RM:-rm}
+SED=`which sed`
+SED=${SED:-sed}
+SORT=`which sort`
+SORT=${SORT:-sort}
+TOUCH=`which touch`
+TOUCH=${TOUCH:-touch}
+
 ninja_split()
 {
-  rm -f $3
-  cat $2 | awk -v pstr=$1 '
+  ${RM} -f $3
+  ${CAT} $2 | ${AWK} -v pstr=$1 '
     BEGIN {c=0;m=0;i=0;mstr="";istr="";
            if (match(pstr, "host")) {pmatch="out/";}
            else {pmatch="out/target/product/([[:alnum:]]|_)+/";}
@@ -32,7 +51,7 @@ ninja_split()
                    }
   ' > $3.tmp
 
-  cat $2 | grep "rspfile_content" | grep '"class":' | sed 's#\\n#\n#g' | awk -v pstr=$1 '
+  ${CAT} $2 | ${GREP} "rspfile_content" | ${GREP} '"class":' | ${SED} 's#\\n#\n#g' | ${AWK} -v pstr=$1 '
     BEGIN {c=0;m=0;i=0;mstr="";istr="";
            if (match(pstr, "host")) {pmatch="out/";}
            else {pmatch="out/target/product/([[:alnum:]]|_)+/";}
@@ -54,29 +73,29 @@ ninja_split()
                         }
   ' >> $3.tmp
 
-  cat $3.tmp | sort | egrep -v "^out\/soong\/" > $3
+  ${CAT} $3.tmp | sort | e${GREP} -v "^out\/soong\/" > $3
 
   if [ ! "$2" == "host" ]; then
-    mv $3 $3.tmp
-    cat $3.tmp | grep -v " out\/host\/" > $3
+    ${MV} $3 $3.tmp
+    ${CAT} $3.tmp | ${GREP} -v " out\/host\/" > $3
   fi
-  rm -f $3.tmp
+  ${RM} -f $3.tmp
 }
 
 if [ "$#" -eq 0 ]; then
-    echo "No ninja file name mentioned"
+    ${ECHO} "No ninja file name mentioned"
     exit 0
 fi
 
 while test $# -gt 0; do
     case "$1" in
         -h|--help)
-        printf "\nusage : ./QSSI_violators <ninja file path>\n\n"
-        echo "        Example : ./QSSI_violators out/build-sdm845.ninja"
-        printf "        -> for getting the list of violators based on QSSI_enforced_projects.txt and QSSI_whitelist.txt\n"
-        printf "\n\n        ./QSSI_violators <ninja file path> <component name string to grep>\n\n"
-        echo "        Example : ./QSSI_violators out/build-sdm845.ninja gfx or ./QSSI_violators out/build-sdm845.ninja display.lnx"
-        printf "        -> for getting the list of violators for the component corresponding to the component string\n\n"
+        ${ECHO} "usage : ./QSSI_violators <ninja file path>"
+        ${ECHO} "        Example : ./QSSI_violators out/build-sdm845.ninja"
+        ${ECHO} "        -> for getting the list of violators based on QSSI_enforced_projects.txt and QSSI_whitelist.txt"
+        ${ECHO} "           ./QSSI_violators <ninja file path> <component name string to grep>"
+        ${ECHO} "        Example : ./QSSI_violators out/build-sdm845.ninja gfx or ./QSSI_violators out/build-sdm845.ninja display.lnx"
+        ${ECHO} "        -> for getting the list of violators for the component corresponding to the component string\n\n"
         exit 0
         ;;
         *)
@@ -86,7 +105,7 @@ while test $# -gt 0; do
 done
 
 if [ ! -f $QSSI_ENFORCED_FILE ] | [ ! -f $QSSI_WHITELIST_FILE ] ; then
-    echo 'QSSI: not enforced for this target'
+    ${ECHO} 'QSSI: not enforced for this target'
     exit 0
 fi
 
@@ -104,29 +123,29 @@ fi
 
 # Search for violators based on QSSI_enforced_projects.txt and QSSI_whitelist.txt or based on component-name
 if [ "$#" -eq 1 ]; then
-    printf "\nQSSI: Finding QSSI violators based on QSSI_whitelist.txt and QSSI_enforced_projects.txt...\n"
+    ${ECHO} "QSSI: Finding QSSI violators based on" "$QSSI_WHITELIST_FILE" "and" "$QSSI_ENFORCED_FILE" "..."
 
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) print $0}}' $QSSI_ENFORCED_FILE $OUT/qssi-system.txt | awk '!x[$0]++' > violators.tmp
-    awk 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(i == $0){c++}} if (c==0) {c=1; print $0} c=0;}' $QSSI_WHITELIST_FILE violators.tmp | awk '!x[$0]++' > $QSSI_VIOLATORS_OUTPUT_FILE
+    ${AWK} 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(match($1,i)) print $0}}' $QSSI_ENFORCED_FILE $OUT/qssi-system.txt | ${AWK} '!x[$0]++' > violators.tmp
+    ${AWK} 'ARGV[1] == FILENAME{a[$0];next} {for (i in a) {if(i == $0){c++}} if (c==0) {c=1; print $0} c=0;}' $QSSI_WHITELIST_FILE violators.tmp | ${AWK} '!x[$0]++' > $QSSI_VIOLATORS_OUTPUT_FILE
 
     if [ ! -s $QSSI_VIOLATORS_OUTPUT_FILE ]; then
-        printf "\nQSSI: no QSSI violators found !\n\n"
+        ${ECHO} "QSSI: no QSSI violators found !"
     else
-        printf "\nQSSI: violators are:\n"
-        printf "Start-->\n"
-        cat $QSSI_VIOLATORS_OUTPUT_FILE
-        printf "<--End\n\n"
-        printf "QSSI: violators also written to %s\n\n" "$QSSI_VIOLATORS_OUTPUT_FILE"
+        ${ECHO} "QSSI: violators are:"
+        ${ECHO} "Start-->"
+        ${CAT} $QSSI_VIOLATORS_OUTPUT_FILE
+        ${ECHO} "<--End"
+        ${ECHO} "QSSI: violators also written to" "$QSSI_VIOLATORS_OUTPUT_FILE"
     fi
 else
-    printf "\n\nFinding QSSI violators ...\n\n"
-    awk '!x[$0]++' violators.txt | tee $2.txt && printf "\n\n"
+    ${ECHO} "Finding QSSI violators ..."
+    ${AWK} '!x[$0]++' violators.txt | ${TEE} $2.txt && ${ECHO} "\n\n"
     if [ ! -s $2.txt ]; then
-        printf "\nNo QSSI violators found !\n\n"
+        ${ECHO} "No QSSI violators found !"
     else
-        printf "QSSI violators written to %s.txt\n\n" "$2"
+        ${ECHO} "QSSI violators written to" "$2"
     fi
-    rm violators.txt
+    ${RM} violators.txt
 fi
 
-rm -f *.tmp
+${RM} -f *.tmp
