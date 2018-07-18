@@ -7,12 +7,14 @@
 QSSI_WHITELIST_FILE="$QCPATH/release/QSSI/QSSI_whitelist.txt"
 QSSI_ENFORCED_FILE="$QCPATH/release/QSSI/QSSI_enforced_projects.txt"
 QSSI_VIOLATORS_OUTPUT_FILE="$OUT/QSSI_violators.txt"
-TARGET_NINJA="out/build-$TARGET_PRODUCT.ninja"
+TARGET_NINJA="out/build-${TARGET_PRODUCT}.ninja"
 
 AWK=`which awk`
 AWK=${AWK:-awk}
 CAT=`which cat`
 CAT=${CAT:-cat}
+CP=`which cp`
+CP=${CP:-cp}
 ECHO=`which echo`
 ECHO=${ECHO:-echo}
 EGREP=`which egrep`
@@ -21,6 +23,8 @@ GREP=`which grep`
 GREP=${GREP:-grep}
 MV=`which mv`
 MV=${MV:-mv}
+PRINTF=`which printf`
+PRINTF=${PRINTF:-printf}
 RM=`which rm`
 RM=${RM:-rm}
 SED=`which sed`
@@ -93,35 +97,26 @@ if [ "$TARGET_PRODUCT" != 'sdm845' ] &&  [ "$TARGET_PRODUCT" != 'sdm710' ]; then
 fi
 
 #2 check qssi enforced file and whitelist file size greater than zero or not
-if [ ! -s $QSSI_ENFORCED_FILE ] | [ ! -f $QSSI_WHITELIST_FILE ] ; then
+if [ ! -s $QSSI_ENFORCED_FILE ] || [ ! -s $QSSI_WHITELIST_FILE ] ; then
+    ${ECHO} "QSSI: Could not find $QSSI_ENFORCED_FILE file or $QSSI_WHITELIST_FILE file or one of them may be empty."
     exit 0
 fi
 
 #3 check out/build-XXX.ninja file size greater than zero or not
 if [ ! -s $TARGET_NINJA ]; then
+    ${ECHO} "QSSI: Could not find $TARGET_NINJA file or it may be empty."
+    exit 0
+fi
+
+#4 check module-info.json file's size greater than zero or not
+if [ ! -s $OUT/module-info.json ]; then
+    ${ECHO} "QSSI: Could not find $OUT/module-info.json or it may be empty."
     exit 0
 fi
 
 if [ -s $QSSI_VIOLATORS_OUTPUT_FILE ]; then
     ${RM} $QSSI_VIOLATORS_OUTPUT_FILE
 fi
-
-while test $# -gt 0; do
-    case "$TARGET_NINJA" in
-        -h|--help)
-        ${ECHO} "usage : ./QSSI_violators <ninja file path>"
-        ${ECHO} "        Example : ./QSSI_violators out/build-sdm845.ninja"
-        ${ECHO} "        -> for getting the list of violators based on QSSI_enforced_projects.txt and QSSI_whitelist.txt"
-        ${ECHO} "           ./QSSI_violators <ninja file path> <component name string to grep>"
-        ${ECHO} "        Example : ./QSSI_violators out/build-sdm845.ninja gfx or ./QSSI_violators out/build-sdm845.ninja display.lnx"
-        ${ECHO} "        -> for getting the list of violators for the component corresponding to the component string\n\n"
-        exit 0
-        ;;
-        *)
-        break
-        ;;
-    esac
-done
 
 # Generate the ninja-split files if they do not exist
 if [ ! -s $OUT/qssi-system.txt ]; then
@@ -142,7 +137,9 @@ if [ -s $TARGET_NINJA ]; then
         for (i in a) {
             if(match($1,i)) print $0
         }
-    }' $QSSI_ENFORCED_FILE $OUT/qssi-system.txt | ${AWK} '!x[$0]++' > violators.tmp
+    }' $QSSI_ENFORCED_FILE $OUT/qssi-system.txt | ${AWK} '!x[$0]++' > violators_.tmp
+    ${GREP} -v "commonsys" violators_.tmp > violators.tmp
+    ${GREP} "commonsys/" $OUT/qssi-vendor.txt >> violators.tmp
 
     ${AWK} 'ARGV[1] == FILENAME{a[$0];next} {
         for (i in a) {
@@ -157,24 +154,39 @@ if [ -s $TARGET_NINJA ]; then
     }' $QSSI_WHITELIST_FILE violators.tmp | ${AWK} '!x[$0]++' > $QSSI_VIOLATORS_OUTPUT_FILE
 
     ${RM} -f *.tmp
-    if [ ! -s $QSSI_VIOLATORS_OUTPUT_FILE ]; then
-        ${ECHO} "QSSI: no QSSI violators found !"
-    else
-        ${ECHO} "QSSI: violators are:"
-        ${ECHO} "Start-->"
-        ${CAT} $QSSI_VIOLATORS_OUTPUT_FILE
-        ${ECHO} "<--End"
-        ${ECHO} "QSSI: violators also written to" "$QSSI_VIOLATORS_OUTPUT_FILE"
-        exit 0
+fi
+
+if [ -s actual_violators.txt ]; then
+    ${RM} actual_violators.txt
+fi
+
+while IFS=' ' read -r source_path module_path; do
+    module_present_flag=""
+    # Search for module in the source path
+    module_present_flag=$(${GREP} "$module_path" $OUT/module-info.json | ${GREP} $source_path);
+    if [ "$module_present_flag" != "" ]
+    then
+        ${ECHO} "$source_path $module_path" >> actual_violators.txt
     fi
+done < $QSSI_VIOLATORS_OUTPUT_FILE
+
+if [ -s actual_violators.txt ]; then
+    ${CP} actual_violators.txt $QSSI_VIOLATORS_OUTPUT_FILE
 else
-    ${ECHO} "Finding QSSI violators ..."
-    ${AWK} '!x[$0]++' violators.txt | ${TEE} $2.txt && ${ECHO} "\n\n"
-    if [ ! -s $2.txt ]; then
-        ${ECHO} "No QSSI violators found !"
-    else
-        ${ECHO} "QSSI violators written to" "$2"
+    if [ -s $QSSI_VIOLATORS_OUTPUT_FILE ]; then
+        ${RM} $QSSI_VIOLATORS_OUTPUT_FILE
     fi
-    ${RM} violators.txt
+fi
+
+if [ ! -s $QSSI_VIOLATORS_OUTPUT_FILE ]; then
+    ${PRINTF} "\nQSSI: No QSSI violators found!\n\n"
     exit 0
+else
+    ${PRINTF} "\nQSSI: violators are:\n"
+    ${PRINTF} "Start-->\n"
+    ${CAT} $QSSI_VIOLATORS_OUTPUT_FILE
+    ${PRINTF} "<--End\n\n"
+    ${PRINTF} "QSSI: violators also written to %s\n\n" "$QSSI_VIOLATORS_OUTPUT_FILE"
+    ${ECHO} "QSSI: Fix these violations before proceeding!"
+    exit 1
 fi
