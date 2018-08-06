@@ -8,6 +8,13 @@ qssi_violators: $(PRODUCT_OUT)/module-info.json
 
 # module-info.json is not included when ONE_SHOT_MAKEFILE,
 # hence disable qssi_violators for that as well.
+# Also, QSSI enforcement is needed only for android-P(and above) new-launch devices.
 ifndef ONE_SHOT_MAKEFILE
-files: qssi_violators
+  ifdef PRODUCT_SHIPPING_API_LEVEL
+    ifneq ($(call math_gt_or_eq,$(PRODUCT_SHIPPING_API_LEVEL),28),)
+      files: qssi_violators
+    endif
+  else # PRODUCT_SHIPPING_API_LEVEL is undefined
+    files: qssi_violators
+  endif
 endif
