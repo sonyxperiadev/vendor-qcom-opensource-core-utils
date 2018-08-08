@@ -5,7 +5,8 @@
 # To know the usage, type ./QSSI_violators --help
 
 QSSI_WHITELIST_FILE="$QCPATH/release/QSSI/QSSI_whitelist.txt"
-QSSI_ENFORCED_FILE="$QCPATH/release/QSSI/QSSI_enforced_projects.txt"
+QSSI_ENFORCED_PROJECTS_FILE="$QCPATH/release/QSSI/QSSI_enforced_projects.txt"
+QSSI_ENFORCED_TARGETS_FILE="$QCPATH/release/QSSI/QSSI_enforced_targets_list.txt"
 QSSI_VIOLATORS_OUTPUT_FILE="$OUT/QSSI_violators.txt"
 TARGET_NINJA="out/build-${TARGET_PRODUCT}.ninja"
 
@@ -91,14 +92,23 @@ ninja_split()
 
 # Main shell script starts here
 #1 Check for qssi supported on this target or not
-if [ "$TARGET_PRODUCT" != 'sdm845' ] &&  [ "$TARGET_PRODUCT" != 'sdm710' ]; then
-    ${ECHO} "QSSI: not enabled for" "$TARGET_PRODUCT" "target"
+if [ ! -e $QSSI_ENFORCED_TARGETS_FILE ]; then
+    ${ECHO} "QSSI: not enabled for" "$TARGET_PRODUCT" "target as "$QSSI_ENFORCED_TARGETS_FILE" was not found."
     exit 0
+else
+    ALL_FLAG=`${GREP} -P "all$" $QSSI_ENFORCED_TARGETS_FILE`
+    if [ -z $ALL_FLAG ]; then
+        TARGET_FLAG=`${GREP} $TARGET_PRODUCT $QSSI_ENFORCED_TARGETS_FILE`
+        if [ -z $TARGET_FLAG ]; then
+            ${ECHO} "QSSI: not enabled for" "$TARGET_PRODUCT" "target"
+            exit 0
+        fi
+    fi
 fi
 
 #2 check qssi enforced file and whitelist file size greater than zero or not
-if [ ! -s $QSSI_ENFORCED_FILE ] || [ ! -s $QSSI_WHITELIST_FILE ] ; then
-    ${ECHO} "QSSI: Could not find $QSSI_ENFORCED_FILE file or $QSSI_WHITELIST_FILE file or one of them may be empty."
+if [ ! -s $QSSI_ENFORCED_PROJECTS_FILE ] || [ ! -s $QSSI_WHITELIST_FILE ] ; then
+    ${ECHO} "QSSI: Could not find $QSSI_ENFORCED_PROJECTS_FILE file or $QSSI_WHITELIST_FILE file or one of them may be empty."
     exit 0
 fi
 
@@ -137,20 +147,22 @@ if [ -s $TARGET_NINJA ]; then
         for (i in a) {
             if(match($1,i)) print $0
         }
-    }' $QSSI_ENFORCED_FILE $OUT/qssi-system.txt | ${AWK} '!x[$0]++' > violators_.tmp
+    }' $QSSI_ENFORCED_PROJECTS_FILE $OUT/qssi-system.txt | ${AWK} '!x[$0]++' > violators_.tmp
     ${GREP} -v "commonsys" violators_.tmp > violators.tmp
     ${GREP} "commonsys/" $OUT/qssi-vendor.txt >> violators.tmp
 
     ${AWK} 'ARGV[1] == FILENAME{a[$0];next} {
+        whitelist_flag=0
         for (i in a) {
-            if(i == $0){
-                c++
+            if(match($0,i)){
+                whitelist_flag++
+                break
             }
         }
-        if (c==0) {
-            c=1; print $0
+        if (whitelist_flag==0) {
+            print $0
         }
-        c=0;
+        whitelist_flag=0;
     }' $QSSI_WHITELIST_FILE violators.tmp | ${AWK} '!x[$0]++' > $QSSI_VIOLATORS_OUTPUT_FILE
 
     ${RM} -f *.tmp
