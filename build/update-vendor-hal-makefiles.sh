@@ -32,6 +32,8 @@ LS=`which ls`
 LS=${LS:-ls}
 MV=`which mv`
 MV=${MV:-mv}
+RM=`which rm`
+RM=${RM:-rm}
 CAT=`which cat`
 CAT=${CAT:-cat}
 CUT=`which cut`
@@ -52,6 +54,10 @@ SORT=`which sort`
 SORT=${SORT:-sort}
 TOUCH=`which touch`
 TOUCH=${TOUCH:-touch}
+MKDIR=`which mkdir`
+MKDIR=${MKDIR:-mkdir}
+SHA256SUM=`which sha256sum`
+SHA256SUM=${SHA256SU:-sha256sum}
 
 function generate_make_files() {
     local dir_path="$ANDROID_BUILD_TOP/$1"
@@ -149,13 +155,84 @@ function start_script_for_interfaces {
         local relative_interface=${interface#${ANDROID_BUILD_TOP}/}
         generate_make_files $relative_interface "android.hidl:system/libhidl/transport"
         if [ $? -ne 0 ] ; then
-           ${ECHO} "HIDL interfaces: FATAL !!!! Update Failed: HAL File not compatible"
+           ${ECHO} "HIDL interfaces: Update Failed"
            return 1;
         fi
     done
     ${ECHO} "HIDL interfaces:  Update complete."
+    ${RM} -f ${ANDROID_BUILD_TOP}/out/vendor-hal/* 2> /dev/null
+    $(generate_checksum_files)
 }
 
-#Start script for interfaces
-start_script_for_interfaces
+function generate_checksum_files {
+    local interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+    ${MKDIR} -p ${ANDROID_BUILD_TOP}/out/vendor-hal
 
+    ${SHA256SUM} `${FIND} ${ANDROID_BUILD_TOP}/system/tools/hidl -type f` > out/vendor-hal/hidl-gen.chksum$1
+    for interface in $interfaces; do
+        local intf_dir=$(${ECHO} $interface | ${SED} 's/\//-/g')
+        ${LS} -1R $interface | ${SHA256SUM} > out/vendor-hal/$intf_dir.list$1
+        ${SHA256SUM} `${FIND} $interface -type f` > out/vendor-hal/$intf_dir.chksum$1
+    done
+}
+
+function check_if_interfaces_changed {
+    local interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+
+    $(generate_checksum_files .new)
+
+    if [ -f ${ANDROID_BUILD_TOP}/out/vendor-hal/hidl-gen.chksum ]; then
+        ${SHA256SUM} -c --quiet ${ANDROID_BUILD_TOP}/out/vendor-hal/hidl-gen.chksum > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            return 1;
+        fi
+    else
+        return 1;
+    fi
+
+    for interface in $interfaces; do
+        local intf_dir=$(${ECHO} $interface | ${SED} 's/\//-/g')
+        if [ -f ${ANDROID_BUILD_TOP}/out/vendor-hal/$intf_dir.list ]; then
+            ${DIFF} -q ${ANDROID_BUILD_TOP}/out/vendor-hal/$intf_dir.list ${ANDROID_BUILD_TOP}/out/vendor-hal/$intf_dir.list.new> /dev/null
+            if [ $? -ne 0 ]; then
+                return 1;
+            fi
+        else
+            return 1;
+        fi
+        if [ -f ${ANDROID_BUILD_TOP}/out/vendor-hal/$intf_dir.chksum ]; then
+            ${SHA256SUM} -c --quiet ${ANDROID_BUILD_TOP}/out/vendor-hal/$intf_dir.chksum > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                return 1;
+            fi
+        else
+            return 1;
+        fi
+    done
+}
+
+case "$1" in
+"--check")
+    if [ ! "${ANDROID_BUILD_TOP}" = "$(gettop)" ]; then
+        echo "Configured and current directory Android tree mismatch"
+        return 1
+    fi
+    pushd ${ANDROID_BUILD_TOP} > /dev/null
+    check_if_interfaces_changed
+    ret=$?
+    if [ $ret -eq 0 ]; then
+        echo "Skipping vendor HAL hidl-gen - no changes detected"
+    fi
+    ${RM} -f ${ANDROID_BUILD_TOP}/out/vendor-hal/*.new 2> /dev/null
+    popd > /dev/null
+    return $ret
+    ;;
+
+"--version")
+    return 2
+    ;;
+
+*)
+    #Start script for interfaces
+    start_script_for_interfaces
+esac
