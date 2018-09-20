@@ -128,14 +128,14 @@ if [ -s $QSSI_VIOLATORS_OUTPUT_FILE ]; then
     ${RM} $QSSI_VIOLATORS_OUTPUT_FILE
 fi
 
-# Generate the ninja-split files if they do not exist
-if [ ! -s $OUT/qssi-system.txt ]; then
+# Generate the ninja-split files if they do not exist OR if they are stale
+if [ ! -s $OUT/qssi-system.txt ] || [ $TARGET_NINJA -nt $OUT/qssi-system.txt ]; then
     ninja_split system $TARGET_NINJA $OUT/qssi-system.txt
 fi
-if [ ! -s $OUT/qssi-vendor.txt ]; then
+if [ ! -s $OUT/qssi-vendor.txt ] || [ $TARGET_NINJA -nt $OUT/qssi-vendor.txt ]; then
     ninja_split vendor $TARGET_NINJA $OUT/qssi-vendor.txt
 fi
-if [ ! -s $OUT/qssi-root.txt ]; then
+if [ ! -s $OUT/qssi-root.txt ] || [ $TARGET_NINJA -nt $OUT/qssi-root.txt ]; then
     ninja_split root $TARGET_NINJA $OUT/qssi-root.txt
 fi
 
