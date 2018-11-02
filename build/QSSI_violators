@@ -24,8 +24,8 @@ GREP=`which grep`
 GREP=${GREP:-grep}
 MV=`which mv`
 MV=${MV:-mv}
-PRINTF=`which printf`
-PRINTF=${PRINTF:-printf}
+#PRINTF=`which printf`
+#PRINTF=${PRINTF:-printf}
 RM=`which rm`
 RM=${RM:-rm}
 SED=`which sed`
@@ -191,14 +191,14 @@ else
 fi
 
 if [ ! -s $QSSI_VIOLATORS_OUTPUT_FILE ]; then
-    ${PRINTF} "\nQSSI: No QSSI violators found!\n\n"
+    ${ECHO} "QSSI: No QSSI violators found!"
     exit 0
 else
-    ${PRINTF} "\nQSSI: violators are:\n"
-    ${PRINTF} "Start-->\n"
+    ${ECHO} "QSSI: violators are:"
+    ${ECHO} "Start-->"
     ${CAT} $QSSI_VIOLATORS_OUTPUT_FILE
-    ${PRINTF} "<--End\n\n"
-    ${PRINTF} "QSSI: violators also written to %s\n\n" "$QSSI_VIOLATORS_OUTPUT_FILE"
+    ${ECHO} "<--End"
+    ${ECHO} "QSSI: violators also written to %s" "$QSSI_VIOLATORS_OUTPUT_FILE"
     ${ECHO} "QSSI: Fix these violations before proceeding!"
     exit 1
 fi
