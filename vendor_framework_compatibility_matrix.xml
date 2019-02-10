@@ -1,4 +1,4 @@
-!-- Copyright (c) 2018, The Linux Foundation. All rights reserved.
+!-- Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -228,6 +228,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <name>IDataConnection</name>
             <instance>slot1</instance>
             <instance>slot2</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.cacert</name>
+        <version>1.0</version>
+        <interface>
+            <name>IService</name>
+            <instance>default</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
@@ -528,6 +536,22 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
            <name>IIWlan</name>
            <instance>slot1</instance>
            <instance>slot2</instance>
+       </interface>
+   </hal>
+   <hal format="hidl" optional="true">
+       <name>vendor.qti.hardware.cvp</name>
+       <version>1.0</version>
+       <interface>
+         <name>ICvp</name>
+         <instance>cvphalservice</instance>
+       </interface>
+   </hal>
+   <hal format="hidl" optional="true">
+       <name>vendor.qti.hardware.audiohalext</name>
+       <version>1.0</version>
+       <interface>
+           <name>IAudioHalExt</name>
+           <instance>default</instance>
        </interface>
    </hal>
 </compatibility-matrix>
