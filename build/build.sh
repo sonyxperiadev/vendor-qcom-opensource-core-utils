@@ -77,10 +77,14 @@ else # For QSSI targets
 
     lunch qssi-${TARGET_BUILD_VARIANT}
     check_return_value $? "lunch qssi-${TARGET_BUILD_VARIANT}"
+    make bootimage "$@"
+    check_return_value $? "make bootimage "$@""
     make droidcore_system "$@"
     check_return_value $? "make droidcore_system "$@""
-    lunch ${TARGET}-$(TARGET_BUILD_VARIANT)
+    lunch ${TARGET}-${TARGET_BUILD_VARIANT}
     check_return_value $? "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
+    make bootimage "$@"
+    check_return_value $? "make bootimage "$@""
     make droidcore_non_system "$@"
     check_return_value $? "make droidcore_non_system "$@""
 fi
