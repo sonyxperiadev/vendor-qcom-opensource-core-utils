@@ -61,14 +61,14 @@ source build/envsetup.sh
 for TARGET in "${QSSI_TARGETS_LIST[@]}"
 do
     if [ "$TARGET_PRODUCT" == "$TARGET" ]; then
-        QSSI_TARGET_FLAG=0 #TODO: Set this flag to 1 once all changes for lunch qssi are merged.
+        QSSI_TARGET_FLAG=1
         break
     fi
 done
 
 # For non-QSSI targets
 if [ $QSSI_TARGET_FLAG -eq 0 ]; then
-    echo "build.sh: Using legacy build process for compilation ..."
+    echo "build.sh: ${TARGET_PRODUCT} is not a QSSI target. Using legacy build process for compilation ..."
     make "$@"
     check_return_value $? "make "$@""
 else # For QSSI targets
