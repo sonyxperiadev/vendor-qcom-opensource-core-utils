@@ -165,6 +165,22 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.wifidisplaysession</name>
+        <version>1.0</version>
+        <interface>
+            <name>IWifiDisplaySession</name>
+            <instance>wifidisplaysession</instance>
+        </interface>
+        <interface>
+            <name>IWifiDisplaySessionVideoTrack</name>
+            <instance>wifidisplaysessionvideotrack</instance>
+        </interface>
+        <interface>
+            <name>IWifiDisplaySessionAudioTrack</name>
+            <instance>wifidisplaysessionaudiotrack</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>com.quicinc.cne.server</name>
         <version>2.0-2</version>
         <interface>
@@ -530,6 +546,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
        </interface>
    </hal>
    <hal format="hidl" optional="true">
+       <name>vendor.qti.hardware.capabilityconfigstore</name>
+       <version>1.0</version>
+       <interface>
+           <name>ICapabilityConfigStore</name>
+           <instance>default</instance>
+       </interface>
+   </hal>
+   <hal format="hidl" optional="true">
        <name>vendor.qti.hardware.data.iwlan</name>
        <version>1.0</version>
        <interface>
@@ -554,4 +578,19 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
            <instance>default</instance>
        </interface>
    </hal>
+    <!-- Codec2 HAl service -->
+    <hal format="hidl" optional="true">
+        <name>android.hardware.media.c2</name>
+        <version>1.0</version>
+        <interface>
+            <name>IComponentStore</name>
+            <instance>default</instance>
+            <instance>software</instance>
+        </interface>
+        <interface>
+            <name>IConfigurable</name>
+            <instance>default</instance>
+            <instance>software</instance>
+        </interface>
+    </hal>
 </compatibility-matrix>
