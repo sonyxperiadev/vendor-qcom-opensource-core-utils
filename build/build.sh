@@ -48,7 +48,7 @@ if [ $retVal -ne 0 ]; then
 fi
 }
 
-QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "talos")
+QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150")
 QSSI_TARGET_FLAG=0
 
 if [ "$TARGET_PRODUCT" == "qssi" ]; then
