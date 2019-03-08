@@ -61,14 +61,14 @@ source build/envsetup.sh
 for TARGET in "${QSSI_TARGETS_LIST[@]}"
 do
     if [ "$TARGET_PRODUCT" == "$TARGET" ]; then
-        QSSI_TARGET_FLAG=0 #TODO: Set this flag to 1 once all changes for lunch qssi are merged.
+        QSSI_TARGET_FLAG=1
         break
     fi
 done
 
 # For non-QSSI targets
 if [ $QSSI_TARGET_FLAG -eq 0 ]; then
-    echo "build.sh: Using legacy build process for compilation ..."
+    echo "build.sh: ${TARGET_PRODUCT} is not a QSSI target. Using legacy build process for compilation ..."
     make "$@"
     check_return_value $? "make "$@""
 else # For QSSI targets
@@ -77,10 +77,14 @@ else # For QSSI targets
 
     lunch qssi-${TARGET_BUILD_VARIANT}
     check_return_value $? "lunch qssi-${TARGET_BUILD_VARIANT}"
+    make bootimage "$@"
+    check_return_value $? "make bootimage "$@""
     make droidcore_system "$@"
     check_return_value $? "make droidcore_system "$@""
-    lunch ${TARGET}-$(TARGET_BUILD_VARIANT)
+    lunch ${TARGET}-${TARGET_BUILD_VARIANT}
     check_return_value $? "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
+    make bootimage "$@"
+    check_return_value $? "make bootimage "$@""
     make droidcore_non_system "$@"
     check_return_value $? "make droidcore_non_system "$@""
 fi
