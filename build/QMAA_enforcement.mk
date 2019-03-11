@@ -7,5 +7,5 @@ qmaa_enforcement:
 		"$(QMAA_HAL_LIST)" "$(QMAA_ENABLED_HAL_MODULES)"
 
 ifeq ($(TARGET_USES_QMAA),true)
-files:qmaa_enforcement
+droidcore:qmaa_enforcement
 endif
