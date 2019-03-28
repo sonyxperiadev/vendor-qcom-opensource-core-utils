@@ -39,25 +39,38 @@
 # Note: For QSSI targets, this script cannot be used to compile individual images
 #
 
-# Check for qssi supported on this target or not
-function check_return_value () {
-retVal=$1
-if [ $retVal -ne 0 ]; then
-    echo "FAILED: build.sh: $2"
-    exit $retVal
-fi
-}
-
 QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150")
 QSSI_TARGET_FLAG=0
 
+function log() {
+    echo "============================================"
+    echo "[build.sh]: $1"
+    echo "============================================"
+}
+
+function check_return_value () {
+    retVal=$1
+    command=$2
+    if [ $retVal -ne 0 ]; then
+        log "FAILED: $command"
+        exit $retVal
+    fi
+}
+
+function command () {
+    command=$1
+    log "Command: \"$command\""
+    time $command
+    retVal=$?
+    check_return_value $retVal "$command"
+}
+
 if [ "$TARGET_PRODUCT" == "qssi" ]; then
-    echo "FAILED: build.sh: lunch option should not be set to qssi. Please set a target out of the following QSSI targets: ${QSSI_TARGETS_LIST[@]}"
+    log "FAILED: lunch option should not be set to qssi. Please set a target out of the following QSSI targets: ${QSSI_TARGETS_LIST[@]}"
     exit 1
 fi
 
-source build/envsetup.sh
-
+# Check if qssi is supported on this target or not.
 for TARGET in "${QSSI_TARGETS_LIST[@]}"
 do
     if [ "$TARGET_PRODUCT" == "$TARGET" ]; then
@@ -68,23 +81,19 @@ done
 
 # For non-QSSI targets
 if [ $QSSI_TARGET_FLAG -eq 0 ]; then
-    echo "build.sh: ${TARGET_PRODUCT} is not a QSSI target. Using legacy build process for compilation ..."
-    make "$@"
-    check_return_value $? "make "$@""
+    log "${TARGET_PRODUCT} is not a QSSI target. Using legacy build process for compilation..."
+    command "source build/envsetup.sh"
+    command "make "$@""
 else # For QSSI targets
-    echo "build.sh: Building Android using build.sh for ${TARGET_PRODUCT} ..."
+    log "Building Android using build.sh for ${TARGET_PRODUCT}..."
     TARGET="$TARGET_PRODUCT"
 
-    lunch qssi-${TARGET_BUILD_VARIANT}
-    check_return_value $? "lunch qssi-${TARGET_BUILD_VARIANT}"
-    make bootimage "$@"
-    check_return_value $? "make bootimage "$@""
-    make droidcore_system "$@"
-    check_return_value $? "make droidcore_system "$@""
-    lunch ${TARGET}-${TARGET_BUILD_VARIANT}
-    check_return_value $? "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
-    make bootimage "$@"
-    check_return_value $? "make bootimage "$@""
-    make droidcore_non_system "$@"
-    check_return_value $? "make droidcore_non_system "$@""
+    command "source build/envsetup.sh"
+    command "lunch qssi-${TARGET_BUILD_VARIANT}"
+    command "make bootimage "$@""
+    command "make droidcore_system "$@""
+
+    command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
+    command "make bootimage "$@""
+    command "make droidcore_non_system "$@""
 fi
