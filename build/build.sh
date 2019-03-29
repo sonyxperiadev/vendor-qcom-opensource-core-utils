@@ -39,7 +39,7 @@
 # Note: For QSSI targets, this script cannot be used to compile individual images
 #
 
-QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150")
+QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona")
 QSSI_TARGET_FLAG=0
 
 function log() {
