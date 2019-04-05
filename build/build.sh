@@ -44,7 +44,7 @@ QSSI_TARGET_FLAG=0
 
 function log() {
     echo "============================================"
-    echo "[build.sh]: $1"
+    echo "[build.sh]: $@"
     echo "============================================"
 }
 
@@ -58,7 +58,7 @@ function check_return_value () {
 }
 
 function command () {
-    command=$1
+    command=$@
     log "Command: \"$command\""
     time $command
     retVal=$?
