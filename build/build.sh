@@ -204,11 +204,9 @@ else # For QSSI targets
 
     command "source build/envsetup.sh"
     command "lunch qssi-${TARGET_BUILD_VARIANT}"
-    command "make bootimage $QSSI_ARGS_WITHOUT_DIST"
+    command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
     command "make $QSSI_ARGS"
-
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
-    command "make bootimage $QSSI_ARGS_WITHOUT_DIST"
     command "make $QSSI_ARGS"
 
     # Copy Qssi system.img to target folder so that all images can be picked up from one folder
