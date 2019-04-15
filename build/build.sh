@@ -39,12 +39,12 @@
 # Note: For QSSI targets, this script cannot be used to compile individual images
 #
 
-QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150")
+QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona")
 QSSI_TARGET_FLAG=0
 
 function log() {
     echo "============================================"
-    echo "[build.sh]: $1"
+    echo "[build.sh]: $@"
     echo "============================================"
 }
 
@@ -58,7 +58,7 @@ function check_return_value () {
 }
 
 function command () {
-    command=$1
+    command=$@
     log "Command: \"$command\""
     time $command
     retVal=$?
