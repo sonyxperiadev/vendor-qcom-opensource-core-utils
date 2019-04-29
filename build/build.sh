@@ -59,7 +59,7 @@
 BUILD_SH_VERSION=1
 ###########################
 
-QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona")
+QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll")
 QSSI_TARGET_FLAG=0
 
 # Default A/B configuration flag for all QSSI targets (not used for legacy targets).
