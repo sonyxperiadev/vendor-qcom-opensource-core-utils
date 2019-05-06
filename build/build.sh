@@ -59,13 +59,18 @@
 BUILD_SH_VERSION=1
 ###########################
 
-QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona")
+QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll")
 QSSI_TARGET_FLAG=0
 
 # Default A/B configuration flag for all QSSI targets (not used for legacy targets).
 ENABLE_AB=true
 ARGS="$@"
 QSSI_ARGS="$ARGS ENABLE_AB=$ENABLE_AB"
+
+#TODO: Remove BUILD_KONA_WITH_QSSI flag once lunch qssi changes on Kona merge.
+if [ "$TARGET_PRODUCT" == "kona" ]; then
+    QSSI_ARGS="$QSSI_ARGS BUILD_KONA_WITH_QSSI=true"
+fi
 
 # OTA/Dist related variables
 DIST_COMMAND="dist"
@@ -199,11 +204,9 @@ else # For QSSI targets
 
     command "source build/envsetup.sh"
     command "lunch qssi-${TARGET_BUILD_VARIANT}"
-    command "make bootimage $QSSI_ARGS_WITHOUT_DIST"
+    command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
     command "make $QSSI_ARGS"
-
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
-    command "make bootimage $QSSI_ARGS_WITHOUT_DIST"
     command "make $QSSI_ARGS"
 
     # Copy Qssi system.img to target folder so that all images can be picked up from one folder
