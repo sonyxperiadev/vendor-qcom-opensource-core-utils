@@ -59,6 +59,7 @@ MKDIR=${MKDIR:-mkdir}
 SHA256SUM=`which sha256sum`
 SHA256SUM=${SHA256SU:-sha256sum}
 
+HIDL_GEN_VERSION=0
 function generate_make_files() {
     local dir_path="$ANDROID_BUILD_TOP/$1"
     pushd $dir_path > /dev/null
@@ -81,6 +82,16 @@ function generate_make_files() {
     local prev_path=""
     for file in $halFilePaths; do
         local hal_path=`${ECHO} "$file" | ${REV} | ${CUT} -d"/" -f2- | ${REV}`
+
+        #Check if version file is present and version is supported
+        if [ -e "$hal_path/hidl_gen_version" ]; then
+            local version=$(${CAT} $hal_path/hidl_gen_version | ${CUT} -d '=' -f 2)
+            if [ $version -gt $HIDL_GEN_VERSION ]; then
+                ${ECHO} "Skipping hidl-gen on $1/$hal_path as hidl-gen version is not compatible."
+                continue;
+            fi
+        fi
+
         if [ -e "$hal_path/Android.bp" ] && [ ! -e "$hal_path/.hidl-autogen" ]; then
             if [ ! "$hal_path" = "$prev_path" ]; then
                 ${ECHO} "Skipping hidl-gen on $1/$hal_path as Android.bp is not compile-time generated"
@@ -148,7 +159,13 @@ function generate_make_files() {
 function start_script_for_interfaces {
     #Find interfaces in workspace
     local interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
-
+    if [ -f ${ANDROID_BUILD_TOP}/vendor/qcom/opensource/core-utils/build/hidl_gen_version ]; then
+        HIDL_GEN_VERSION=$(${CAT} ${ANDROID_BUILD_TOP}/vendor/qcom/opensource/core-utils/build/hidl_gen_version | ${CUT} -d '=' -f 2)
+    else
+        ${ECHO} "HIDL GEN VERSION file doesn't Exist.Exiting..."
+        return 1;
+    fi
+    ${ECHO} "HIDL_GEN_VERSION=$HIDL_GEN_VERSION"
     ${ECHO} "HIDL interfaces:  Scanning for changes..."
     for interface in $interfaces; do
         #generate interfaces
