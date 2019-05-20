@@ -62,6 +62,12 @@ BUILD_SH_VERSION=1
 QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll")
 QSSI_TARGET_FLAG=0
 
+# Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
+DATE=`which date`
+DATE=${DATE:-date}
+EPOCH_TIME=`${DATE} +%s`
+export BUILD_DATETIME="$EPOCH_TIME"
+
 # Default A/B configuration flag for all QSSI targets (not used for legacy targets).
 ENABLE_AB=true
 ARGS="$@"
