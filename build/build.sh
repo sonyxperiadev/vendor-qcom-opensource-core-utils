@@ -292,8 +292,11 @@ else # For QSSI targets
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
 
-    # Copy Qssi system.img to target folder so that all images can be picked up from one folder
+    # Copy Qssi system|product.img to target folder so that all images can be picked up from one folder
     command "cp out/target/product/qssi/system.img $OUT/"
+    if [ -f  out/target/product/qssi/product.img ]; then
+       command "cp out/target/product/qssi/product.img $OUT/"
+    fi
 fi
 
 # DIST/OTA specific operations:
