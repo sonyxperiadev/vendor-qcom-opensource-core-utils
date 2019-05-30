@@ -67,11 +67,6 @@ ENABLE_AB=true
 ARGS="$@"
 QSSI_ARGS="$ARGS ENABLE_AB=$ENABLE_AB"
 
-#TODO: Remove BUILD_KONA_WITH_QSSI flag once lunch qssi changes on Kona merge.
-if [ "$TARGET_PRODUCT" == "kona" ]; then
-    QSSI_ARGS="$QSSI_ARGS BUILD_KONA_WITH_QSSI=true"
-fi
-
 # OTA/Dist related variables
 DIST_COMMAND="dist"
 DIST_ENABLED=false
