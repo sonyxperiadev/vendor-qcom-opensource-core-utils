@@ -122,9 +122,9 @@ function log() {
     ${ECHO} "============================================"
 }
 
-for TARGET in "${DYNAMIC_PARTITION_ENABLED_TARGET_LIST[@]}"
+for DP_TARGET in "${DYNAMIC_PARTITION_ENABLED_TARGET_LIST[@]}"
 do
-    if [ "$TARGET_PRODUCT" == "$TARGET" ]; then
+    if [ "$TARGET_PRODUCT" == "$DP_TARGET" ]; then
         log "${TARGET_PRODUCT} found in Dynamic Parition Enablement List"
         BOARD_DYNAMIC_PARTITION_ENABLE=true
         break
@@ -158,9 +158,9 @@ fi
 
 # Check if dist is supported on this target (yet) or not, and override DIST_ENABLED flag.
 IS_DIST_ENABLED_TARGET=false
-for TARGET in "${DIST_ENABLED_TARGET_LIST[@]}"
+for DIST_TARGET in "${DIST_ENABLED_TARGET_LIST[@]}"
 do
-    if [ "$TARGET_PRODUCT" == "$TARGET" ]; then
+    if [ "$TARGET_PRODUCT" == "$DIST_TARGET" ]; then
         IS_DIST_ENABLED_TARGET=true
         break
     fi
@@ -265,9 +265,9 @@ if [ "$TARGET_PRODUCT" == "qssi" ]; then
 fi
 
 # Check if qssi is supported on this target or not.
-for TARGET in "${QSSI_TARGETS_LIST[@]}"
+for QSSI_TARGET in "${QSSI_TARGETS_LIST[@]}"
 do
-    if [ "$TARGET_PRODUCT" == "$TARGET" ]; then
+    if [ "$TARGET_PRODUCT" == "$QSSI_TARGET" ]; then
         QSSI_TARGET_FLAG=1
         break
     fi
