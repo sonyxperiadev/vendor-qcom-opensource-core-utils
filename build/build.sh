@@ -248,15 +248,14 @@ function generate_ota_zip () {
         --output-target-files $MERGED_TARGET_FILES \
         --system-misc-info-keys $DIST_DIR/merge_config_system_misc_info_keys \
         --system-item-list $DIST_DIR/merge_config_system_item_list \
-        --other-item-list $DIST_DIR/merge_config_other_item_list"
+        --other-item-list $DIST_DIR/merge_config_other_item_list \
+        --output-ota  $MERGED_OTA_ZIP"
 
     if [ "$ENABLE_AB" = false ]; then
         MERGE_TARGET_FILES_COMMAND="$MERGE_TARGET_FILES_COMMAND --rebuild_recovery"
     fi
 
     command "$MERGE_TARGET_FILES_COMMAND"
-    log "MERGED_OTA_ZIP=$MERGED_OTA_ZIP"
-    command "./build/tools/releasetools/ota_from_target_files.py -v $MERGED_TARGET_FILES $MERGED_OTA_ZIP"
 }
 
 if [ "$TARGET_PRODUCT" == "qssi" ]; then
