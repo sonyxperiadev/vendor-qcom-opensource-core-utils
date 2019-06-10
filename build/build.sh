@@ -55,12 +55,45 @@
 #     Usage: ./build.sh dist -j32
 #     This triggers make dist for qssi and target lunch, generates target-files, merges them
 #     and triggers ota generation.
-#
-BUILD_SH_VERSION=1
+# Version 2:
+#     Supports custom copy paths for dynamic patition images when compiled with dist.
+#     option : --dp_images_path=<custom-copy-path>
+BUILD_SH_VERSION=2
 ###########################
+
+#Sanitize host toolsi
+LS=`which ls`
+LS=${LS:-ls}
+MV=`which mv`
+MV=${MV:-mv}
+RM=`which rm`
+RM=${RM:-rm}
+CAT=`which cat`
+CAT=${CAT:-cat}
+CUT=`which cut`
+CUT=${CUT:-cut}
+REV=`which rev`
+REV=${REV:-rev}
+SED=`which sed`
+SED=${SED:-sed}
+DIFF=`which diff`
+DIFF=${DIFF:-diff}
+ECHO=`which echo`
+ECHO=${ECHO:-echo}
+FIND=`which find`
+FIND=${FIND:-find}
+GREP=`which grep`
+GREP=${GREP:-grep}
+
 
 QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll")
 QSSI_TARGET_FLAG=0
+
+# Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
+DATE=`which date`
+DATE=${DATE:-date}
+EPOCH_TIME=`${DATE} +%s`
+export BUILD_DATETIME="$EPOCH_TIME"
 
 # Default A/B configuration flag for all QSSI targets (not used for legacy targets).
 ENABLE_AB=true
@@ -68,6 +101,11 @@ ARGS="$@"
 QSSI_ARGS="$ARGS ENABLE_AB=$ENABLE_AB"
 
 # OTA/Dist related variables
+#This flag control dynamic partition enablement
+BOARD_DYNAMIC_PARTITION_ENABLE=false
+
+# OTA/Dist related variaibles
+QSSI_OUT="out/target/product/qssi"
 DIST_COMMAND="dist"
 DIST_ENABLED=false
 QSSI_ARGS_WITHOUT_DIST=""
@@ -75,6 +113,26 @@ DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
 DIST_ENABLED_TARGET_LIST=("sdm710" "sdm845" "msmnile" "sm6150")
+DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("msmnile")
+DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
+DP_IMAGES_OVERRIDE=false
+function log() {
+    ${ECHO} "============================================"
+    ${ECHO} "[build.sh]: $@"
+    ${ECHO} "============================================"
+}
+
+for DP_TARGET in "${DYNAMIC_PARTITION_ENABLED_TARGET_LIST[@]}"
+do
+    if [ "$TARGET_PRODUCT" == "$DP_TARGET" ]; then
+        log "${TARGET_PRODUCT} found in Dynamic Parition Enablement List"
+        BOARD_DYNAMIC_PARTITION_ENABLE=true
+        break
+    fi
+done
+
+# Set Dynamic Partitio value
+QSSI_ARGS="$QSSI_ARGS BOARD_DYNAMIC_PARTITION_ENABLE=$BOARD_DYNAMIC_PARTITION_ENABLE"
 
 for ARG in $QSSI_ARGS
 do
@@ -85,26 +143,28 @@ do
         exit 0
     elif [ "$ARG" == "$DIST_COMMAND" ]; then
         DIST_ENABLED=true
+    elif [[ "$ARG" == *"--dp_images_path"* ]]; then
+        DP_IMAGES_OVERRIDE=true
+        DYNAMIC_PARTITIONS_IMAGES_PATH=$(${ECHO} "$ARG" | ${CUT} -d'=' -f 2)
     else
         QSSI_ARGS_WITHOUT_DIST="$QSSI_ARGS_WITHOUT_DIST $ARG"
     fi
 done
 
+#Strip image_path if present
+if [ "$DP_IMAGES_OVERRIDE" = true ]; then
+    QSSI_ARGS=${QSSI_ARGS//"--dp_images_path=$DYNAMIC_PARTITIONS_IMAGES_PATH"/}
+fi
+
 # Check if dist is supported on this target (yet) or not, and override DIST_ENABLED flag.
 IS_DIST_ENABLED_TARGET=false
-for TARGET in "${DIST_ENABLED_TARGET_LIST[@]}"
+for DIST_TARGET in "${DIST_ENABLED_TARGET_LIST[@]}"
 do
-    if [ "$TARGET_PRODUCT" == "$TARGET" ]; then
+    if [ "$TARGET_PRODUCT" == "$DIST_TARGET" ]; then
         IS_DIST_ENABLED_TARGET=true
         break
     fi
 done
-
-function log() {
-    echo "============================================"
-    echo "[build.sh]: $@"
-    echo "============================================"
-}
 
 # Disable dist if it's not supported (yet).
 if [ "$IS_DIST_ENABLED_TARGET" = false ] && [ "$DIST_ENABLED" = true ]; then
@@ -134,6 +194,34 @@ function check_if_file_exists () {
     if [[ ! -f "$1" ]]; then
         log "Could not find the file: \"$1\", aborting.."
         exit 1
+    fi
+}
+
+function generate_dynamic_partition_images () {
+    log "Generate Dynamic Partition Images for ${TARGET_PRODUCT}"
+    # Handling for Dist Enabled targets
+    # super.img/super_empty generation
+    if [ "$DIST_ENABLED" = true ]; then
+       if [ "$DP_IMAGES_OVERRIDE" = true ]; then
+           command "mkdir -p $DYNAMIC_PARTITIONS_IMAGES_PATH"
+       fi
+       command "cp out/target/product/qssi/vbmeta_system.img $OUT/"
+       command "unzip -jo $MERGED_TARGET_FILES IMAGES/*.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
+       command "./build/tools/releasetools/build_super_image.py $MERGED_TARGET_FILES $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
+    else
+        command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
+        command "mkdir -p out/${TARGET_PRODUCT}_dpm"
+        check_if_file_exists "$QSSI_OUT/dynamic_partition_metadata.txt"
+        check_if_file_exists "$OUT/dynamic_partition_metadata.txt"
+        MERGED_DPM_PATH="out/${TARGET_PRODUCT}_dpm/dynamic_partition_metadata.txt"
+        MERGE_DYNAMIC_PARTITION_INFO_COMMAND="./build/tools/releasetools/merge_dynamic_partition_metadata.py \
+            --qssi-dpm-file=$QSSI_OUT/dynamic_partition_metadata.txt \
+            --target-dpm-file=$OUT/dynamic_partition_metadata.txt \
+            --merged-dpm-file=$MERGED_DPM_PATH"
+        # Temporarily change permission of merge_dynamic_partition_metadata.py till proper fix is merged.
+        command "chmod 755 build/tools/releasetools/merge_dynamic_partition_metadata.py"
+        command "$MERGE_DYNAMIC_PARTITION_INFO_COMMAND"
+        command "./build/tools/releasetools/build_super_image.py $MERGED_DPM_PATH $OUT/super_empty.img"
     fi
 }
 
@@ -177,9 +265,9 @@ if [ "$TARGET_PRODUCT" == "qssi" ]; then
 fi
 
 # Check if qssi is supported on this target or not.
-for TARGET in "${QSSI_TARGETS_LIST[@]}"
+for QSSI_TARGET in "${QSSI_TARGETS_LIST[@]}"
 do
-    if [ "$TARGET_PRODUCT" == "$TARGET" ]; then
+    if [ "$TARGET_PRODUCT" == "$QSSI_TARGET" ]; then
         QSSI_TARGET_FLAG=1
         break
     fi
@@ -204,11 +292,19 @@ else # For QSSI targets
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
 
-    # Copy Qssi system.img to target folder so that all images can be picked up from one folder
+    # Copy Qssi system|product.img to target folder so that all images can be picked up from one folder
     command "cp out/target/product/qssi/system.img $OUT/"
+    if [ -f  out/target/product/qssi/product.img ]; then
+       command "cp out/target/product/qssi/product.img $OUT/"
+    fi
 fi
 
 # DIST/OTA specific operations:
 if [ "$DIST_ENABLED" = true ]; then
     generate_ota_zip
+fi
+
+# Handle dynamic partition case and generate images
+if [ "$BOARD_DYNAMIC_PARTITION_ENABLE" = true ]; then
+    generate_dynamic_partition_images
 fi
