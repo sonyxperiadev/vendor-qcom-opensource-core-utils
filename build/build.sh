@@ -255,7 +255,7 @@ function generate_dynamic_partition_images () {
            command "mkdir -p $DYNAMIC_PARTITIONS_IMAGES_PATH"
        fi
        command "cp out/target/product/qssi/vbmeta_system.img $OUT/"
-       command "unzip -jo $MERGED_TARGET_FILES IMAGES/*.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
+       command "unzip -jo $MERGED_TARGET_FILES IMAGES/*.img -x IMAGES/userdata.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
        command "./build/tools/releasetools/build_super_image.py $MERGED_TARGET_FILES $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
     else
         command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
