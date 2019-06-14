@@ -140,7 +140,7 @@ if [[ "$MERGE_ONLY" == 1 ]]; then
     fi
 fi
 
-QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll")
+QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket")
 QSSI_TARGET_FLAG=0
 
 # Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
@@ -166,7 +166,7 @@ QSSI_ARGS_WITHOUT_DIST=""
 DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
-DIST_ENABLED_TARGET_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona")
+DIST_ENABLED_TARGET_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "trinket")
 DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("msmnile" "kona" "sdm710")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
