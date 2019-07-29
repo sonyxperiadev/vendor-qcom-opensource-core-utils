@@ -140,7 +140,7 @@ if [[ "$MERGE_ONLY" == 1 ]]; then
     fi
 fi
 
-QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito")
+QSSI_TARGETS_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal")
 QSSI_TARGET_FLAG=0
 
 # Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
@@ -166,7 +166,7 @@ QSSI_ARGS_WITHOUT_DIST=""
 DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
-DIST_ENABLED_TARGET_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito")
+DIST_ENABLED_TARGET_LIST=("sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal")
 DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("msmnile" "sdm710" "trinket")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
@@ -191,7 +191,7 @@ QSSI_ARGS="$QSSI_ARGS BOARD_DYNAMIC_PARTITION_ENABLE=$BOARD_DYNAMIC_PARTITION_EN
 # Set Shipping API level on target basis.
 SHIPPING_API_P="28"
 SHIPPING_API_Q="29"
-SHIPPING_API_P_TARGET_LIST=("sdm845" "sm6150" "atoll" "trinket" "lito" "kona" "sdm710")
+SHIPPING_API_P_TARGET_LIST=("sdm845" "sm6150" "atoll" "trinket" "lito" "kona" "sdm710" "bengal")
 SHIPPING_API_LEVEL=$SHIPPING_API_Q
 for P_API_TARGET in "${SHIPPING_API_P_TARGET_LIST[@]}"
 do
