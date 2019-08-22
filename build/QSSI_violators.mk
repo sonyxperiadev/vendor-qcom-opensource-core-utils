@@ -13,12 +13,8 @@ ifndef ONE_SHOT_MAKEFILE
   ifdef PRODUCT_SHIPPING_API_LEVEL
     ifneq ($(call math_gt_or_eq,$(PRODUCT_SHIPPING_API_LEVEL),28),)
       droidcore: qssi_violators
-      droidcore_system: qssi_violators
-      droidcore_non_system: qssi_violators
     endif
   else # PRODUCT_SHIPPING_API_LEVEL is undefined
     droidcore: qssi_violators
-    droidcore_system: qssi_violators
-    droidcore_non_system: qssi_violators
   endif
 endif
