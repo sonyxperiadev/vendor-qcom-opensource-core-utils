@@ -167,7 +167,7 @@ DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
 DIST_ENABLED_TARGET_LIST=("kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal")
-DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("kona" "msmnile" "sdm710" "trinket")
+DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("msmnile" "sdm710" "trinket")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
 function log() {
