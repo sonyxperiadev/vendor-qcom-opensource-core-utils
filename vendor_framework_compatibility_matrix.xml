@@ -334,6 +334,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
            </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.radio.internal.deviceinfo</name>
+        <version>1.0</version>
+        <interface>
+            <name>IDeviceInfo</name>
+            <instance>deviceinfo</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.radio.lpa</name>
         <version>1.0</version>
         <interface>
@@ -513,22 +521,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         </interface>
     </hal>
    <hal format="hidl" optional="true">
-        <name>vendor.qti.hardware.mlshal</name>
-        <version>1.0</version>
-        <interface>
-            <name>IMlsDap</name>
-            <instance>mlsdaphal</instance>
-        </interface>
-        <interface>
-            <name>IMlsVnc</name>
-            <instance>mlsvnchal</instance>
-        </interface>
-        <interface>
-            <name>IMlsIon</name>
-            <instance>mlsionhal</instance>
-        </interface>
-   </hal>
-   <hal format="hidl" optional="true">
         <name>vendor.display.config</name>
         <version>1.0-10</version>
         <interface>
@@ -706,12 +698,50 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
              <instance>default</instance>
          </interface>
     </hal>
+    <!-- System Helper HAL Service -->
+    <hal format="hidl" optional="true">
+         <name>vendor.qti.hardware.systemhelper</name>
+         <version>1.0</version>
+         <interface>
+             <name>ISystemEvent</name>
+             <instance>default</instance>
+         </interface>
+         <interface>
+             <name>ISystemResource</name>
+             <instance>default</instance>
+         </interface>
+     </hal>
+
+    <!-- Trusted UI HAL Service -->
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.trustedui</name>
+        <version>1.0</version>
+        <interface>
+            <name>ITrustedUI</name>
+            <instance>default</instance>
+        </interface>
+        <interface>
+            <name>ITrustedInput</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+
     <!-- cryptfshw HAL service -->
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.cryptfshw</name>
         <version>1.0</version>
         <interface>
             <name>ICryptfsHw</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <!-- SERVICETRACKER HAL service -->
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.servicetracker</name>
+        <transport>hwbinder</transport>
+        <version>1.0-1</version>
+        <interface>
+            <name>IServicetracker</name>
             <instance>default</instance>
         </interface>
     </hal>
