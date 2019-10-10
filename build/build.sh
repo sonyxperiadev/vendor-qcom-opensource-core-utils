@@ -382,7 +382,7 @@ else # For QSSI targets
     log "DIST_ENABLED=$DIST_ENABLED, ENABLE_AB=$ENABLE_AB"
 
     TARGET="$TARGET_PRODUCT"
-
+    export TARGET_PARENT_VENDOR="$TARGET_PRODUCT"
     if [[ "$FULL_BUILD" -eq 1 ]]; then
         log "Executing a full build ..."
         full_build
