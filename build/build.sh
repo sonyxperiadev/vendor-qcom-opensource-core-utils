@@ -270,7 +270,11 @@ function generate_dynamic_partition_images () {
        fi
        command "cp out/target/product/qssi/vbmeta_system.img $OUT/"
        command "unzip -jo $MERGED_TARGET_FILES IMAGES/*.img -x IMAGES/userdata.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
-       command "./build/tools/releasetools/build_super_image.py $MERGED_TARGET_FILES $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
+       # TEMP FIX
+       MERGED_TARGET_FILES_DIR=$(mktemp --directory)
+       command "unzip $MERGED_TARGET_FILES IMAGES/* META/* */build.prop -d $MERGED_TARGET_FILES_DIR"
+       # END TEMP FIX
+       command "./build/tools/releasetools/build_super_image.py $MERGED_TARGET_FILES_DIR $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
     else
         command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
         command "mkdir -p out/${TARGET_PRODUCT}_dpm"
@@ -291,13 +295,13 @@ function generate_dynamic_partition_images () {
 function generate_ota_zip () {
     log "Processing dist/ota commands:"
 
-    SYSTEM_TARGET_FILES="$(find $DIST_DIR -name "qssi*-target_files-*.zip" -print)"
-    log "SYSTEM_TARGET_FILES=$SYSTEM_TARGET_FILES"
-    check_if_file_exists "$SYSTEM_TARGET_FILES"
+    FRAMEWORK_TARGET_FILES="$(find $DIST_DIR -name "qssi*-target_files-*.zip" -print)"
+    log "FRAMEWORK_TARGET_FILES=$FRAMEWORK_TARGET_FILES"
+    check_if_file_exists "$FRAMEWORK_TARGET_FILES"
 
-    OTHER_TARGET_FILES="$(find $DIST_DIR -name "${TARGET_PRODUCT}*-target_files-*.zip" -print)"
-    log "OTHER_TARGET_FILES=$OTHER_TARGET_FILES"
-    check_if_file_exists "$OTHER_TARGET_FILES"
+    VENDOR_TARGET_FILES="$(find $DIST_DIR -name "${TARGET_PRODUCT}*-target_files-*.zip" -print)"
+    log "VENDOR_TARGET_FILES=$VENDOR_TARGET_FILES"
+    check_if_file_exists "$VENDOR_TARGET_FILES"
 
     log "MERGED_TARGET_FILES=$MERGED_TARGET_FILES"
 
@@ -305,13 +309,20 @@ function generate_ota_zip () {
     check_if_file_exists "$DIST_DIR/merge_config_system_item_list"
     check_if_file_exists "$DIST_DIR/merge_config_other_item_list"
 
-    MERGE_TARGET_FILES_COMMAND="./build/tools/releasetools/merge_target_files.py \
-        --system-target-files $SYSTEM_TARGET_FILES \
-        --other-target-files $OTHER_TARGET_FILES \
+    check_if_file_exists "$DIST_DIR/otatools.zip"
+    OTATOOLS_DIR="$(mktemp --directory)"
+    log "Unpacking otatools.zip to $OTATOOLS_DIR"
+    UNZIP_OTATOOLS_COMMAND="unzip -d $OTATOOLS_DIR $DIST_DIR/otatools.zip"
+    command "$UNZIP_OTATOOLS_COMMAND"
+
+    MERGE_TARGET_FILES_COMMAND="$OTATOOLS_DIR/releasetools/merge_target_files.py \
+        --path $OTATOOLS_DIR \
+        --framework-target-files $FRAMEWORK_TARGET_FILES \
+        --vendor-target-files $VENDOR_TARGET_FILES \
         --output-target-files $MERGED_TARGET_FILES \
-        --system-misc-info-keys $DIST_DIR/merge_config_system_misc_info_keys \
-        --system-item-list $DIST_DIR/merge_config_system_item_list \
-        --other-item-list $DIST_DIR/merge_config_other_item_list \
+        --framework-misc-info-keys $DIST_DIR/merge_config_system_misc_info_keys \
+        --framework-item-list $DIST_DIR/merge_config_system_item_list \
+        --vendor-item-list $DIST_DIR/merge_config_other_item_list \
         --output-ota  $MERGED_OTA_ZIP"
 
     if [ "$ENABLE_AB" = false ]; then
