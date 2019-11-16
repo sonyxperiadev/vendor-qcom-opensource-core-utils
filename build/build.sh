@@ -140,8 +140,17 @@ if [[ "$MERGE_ONLY" == 1 ]]; then
     fi
 fi
 
-QSSI_TARGETS_LIST=("lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal")
+QSSI_TARGETS_LIST=("lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "bengal_32")
 QSSI_TARGET_FLAG=0
+
+case "$TARGET_PRODUCT" in
+    *_32)
+        TARGET_QSSI="qssi_32"
+        ;;
+    *)
+        TARGET_QSSI="qssi"
+        ;;
+esac
 
 # Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
 DATE=`which date`
@@ -159,14 +168,14 @@ QSSI_ARGS="$ARGS ENABLE_AB=$ENABLE_AB"
 BOARD_DYNAMIC_PARTITION_ENABLE=false
 
 # OTA/Dist related variaibles
-QSSI_OUT="out/target/product/qssi"
+QSSI_OUT="out/target/product/$TARGET_QSSI"
 DIST_COMMAND="dist"
 DIST_ENABLED=false
 QSSI_ARGS_WITHOUT_DIST=""
 DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
-DIST_ENABLED_TARGET_LIST=("lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll")
+DIST_ENABLED_TARGET_LIST=("lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "bengal_32" "atoll")
 DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
@@ -191,7 +200,7 @@ QSSI_ARGS="$QSSI_ARGS BOARD_DYNAMIC_PARTITION_ENABLE=$BOARD_DYNAMIC_PARTITION_EN
 # Set Shipping API level on target basis.
 SHIPPING_API_P="28"
 SHIPPING_API_Q="29"
-SHIPPING_API_P_TARGET_LIST=("sdm845" "sm6150" "bengal")
+SHIPPING_API_P_TARGET_LIST=("sdm845" "sm6150" "bengal" "bengal_32")
 SHIPPING_API_LEVEL=$SHIPPING_API_Q
 for P_API_TARGET in "${SHIPPING_API_P_TARGET_LIST[@]}"
 do
@@ -268,7 +277,7 @@ function generate_dynamic_partition_images () {
        if [ "$DP_IMAGES_OVERRIDE" = true ]; then
            command "mkdir -p $DYNAMIC_PARTITIONS_IMAGES_PATH"
        fi
-       command "cp out/target/product/qssi/vbmeta_system.img $OUT/"
+       command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
        command "unzip -jo $MERGED_TARGET_FILES IMAGES/*.img -x IMAGES/userdata.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
        command "./build/tools/releasetools/build_super_image.py $MERGED_TARGET_FILES $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
     else
@@ -324,7 +333,7 @@ function generate_ota_zip () {
 function build_qssi_only () {
     command "source build/envsetup.sh"
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
-    command "lunch qssi-${TARGET_BUILD_VARIANT}"
+    command "lunch ${TARGET_QSSI}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
 }
 
@@ -350,9 +359,9 @@ function full_build () {
     build_qssi_only
     build_target_only
     # Copy Qssi system|product.img to target folder so that all images can be picked up from one folder
-    command "cp out/target/product/qssi/system.img $OUT/"
-    if [ -f  out/target/product/qssi/product.img ]; then
-        command "cp out/target/product/qssi/product.img $OUT/"
+    command "cp $QSSI_OUT/system.img $OUT/"
+    if [ -f  $QSSI_OUT/product.img ]; then
+        command "cp $QSSI_OUT/product.img $OUT/"
     fi
     merge_only
 }
