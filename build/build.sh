@@ -275,6 +275,7 @@ function generate_dynamic_partition_images () {
        command "unzip $MERGED_TARGET_FILES IMAGES/* META/* */build.prop -d $MERGED_TARGET_FILES_DIR"
        # END TEMP FIX
        command "./build/tools/releasetools/build_super_image.py $MERGED_TARGET_FILES_DIR $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
+       command "${RM} -rf ${MERGED_TARGET_FILES_DIR}"
     else
         command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
         command "mkdir -p out/${TARGET_PRODUCT}_dpm"
@@ -330,6 +331,8 @@ function generate_ota_zip () {
     fi
 
     command "$MERGE_TARGET_FILES_COMMAND"
+
+    command "${RM} -rf ${OTATOOLS_DIR}"
 }
 
 function build_qssi_only () {
