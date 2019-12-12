@@ -335,6 +335,11 @@ function generate_ota_zip () {
     command "${RM} -rf ${OTATOOLS_DIR}"
 }
 
+function run_qiifa () {
+    command "python vendor/qcom/proprietary/commonsys-intf/QIIFA/qiifa_abi_checker/dump_sp_hal_list.py"
+    command "python vendor/qcom/proprietary/commonsys-intf/QIIFA/qiifa_main.py --type all"
+}
+
 function build_qssi_only () {
     command "source build/envsetup.sh"
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
@@ -347,6 +352,7 @@ function build_target_only () {
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
+    run_qiifa
 }
 
 function merge_only () {
