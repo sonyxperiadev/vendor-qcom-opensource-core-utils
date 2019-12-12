@@ -430,10 +430,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.wifi.supplicant</name>
-        <version>1.0</version>
+        <version>1.0-2</version>
         <interface>
             <name>ISupplicant</name>
             <instance>default</instance>
+            <instance>wigigp2p</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
@@ -449,6 +450,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <version>1.0</version>
         <interface>
             <name>ISuppTunnelProvider</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.fstman</name>
+        <version>1.0</version>
+        <interface>
+            <name>IFstManager</name>
             <instance>default</instance>
         </interface>
     </hal>
