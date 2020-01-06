@@ -336,8 +336,12 @@ function generate_ota_zip () {
 }
 
 function run_qiifa () {
-    command "python vendor/qcom/proprietary/commonsys-intf/QIIFA/qiifa_abi_checker/dump_sp_hal_list.py"
-    command "python vendor/qcom/proprietary/commonsys-intf/QIIFA/qiifa_main.py --type all"
+    SP_HAL_LIST_PATH="$QCPATH/commonsys-intf/QIIFA/qiifa_abi_checker/dump_sp_hal_list.py"
+    QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA/qiifa_main.py"
+    if [ -f  $SP_HAL_LIST_PATH -a -f $QIIFA_SCRIPT ]; then
+     command "python $SP_HAL_LIST_PATH"
+     command "python $QIIFA_SCRIPT --type all"
+    fi
 }
 
 function build_qssi_only () {
@@ -400,7 +404,6 @@ else # For QSSI targets
     log "Building Android using build.sh for ${TARGET_PRODUCT}..."
     log "QSSI_ARGS=\"$QSSI_ARGS\""
     log "DIST_ENABLED=$DIST_ENABLED, ENABLE_AB=$ENABLE_AB"
-
     TARGET="$TARGET_PRODUCT"
     export TARGET_PARENT_VENDOR="$TARGET_PRODUCT"
     if [[ "$FULL_BUILD" -eq 1 ]]; then
