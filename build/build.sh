@@ -170,6 +170,14 @@ DIST_ENABLED_TARGET_LIST=("lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" 
 DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("lahaina" "kona" "msmnile" "sdm710" "lito" "trinket")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
+
+OTATOOLS_DIR="$(mktemp --directory)"
+MERGED_TARGET_FILES_DIR="$(mktemp --directory)"
+cleanup() {
+    rm -rf $OTATOOLS_DIR $MERGED_TARGET_FILES_DIR
+}
+trap cleanup EXIT
+
 function log() {
     ${ECHO} "============================================"
     ${ECHO} "[build.sh]: $@"
@@ -268,13 +276,14 @@ function generate_dynamic_partition_images () {
        if [ "$DP_IMAGES_OVERRIDE" = true ]; then
            command "mkdir -p $DYNAMIC_PARTITIONS_IMAGES_PATH"
        fi
-       command "cp out/target/product/qssi/vbmeta_system.img $OUT/"
+       if [ -f "out/target/product/qssi/vbmeta_system.img" ]; then
+           command "cp out/target/product/qssi/vbmeta_system.img $OUT/"
+       fi
        command "unzip -jo $MERGED_TARGET_FILES IMAGES/*.img -x IMAGES/userdata.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
        # TEMP FIX
-       MERGED_TARGET_FILES_DIR=$(mktemp --directory)
        command "unzip $MERGED_TARGET_FILES IMAGES/* META/* */build.prop -d $MERGED_TARGET_FILES_DIR"
        # END TEMP FIX
-       command "./build/tools/releasetools/build_super_image.py $MERGED_TARGET_FILES_DIR $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
+       command "$OTATOOLS_DIR/releasetools/build_super_image.py --path $OTATOOLS_DIR $MERGED_TARGET_FILES_DIR $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
        command "${RM} -rf ${MERGED_TARGET_FILES_DIR}"
     else
         command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
@@ -311,7 +320,6 @@ function generate_ota_zip () {
     check_if_file_exists "$DIST_DIR/merge_config_other_item_list"
 
     check_if_file_exists "$DIST_DIR/otatools.zip"
-    OTATOOLS_DIR="$(mktemp --directory)"
     log "Unpacking otatools.zip to $OTATOOLS_DIR"
     UNZIP_OTATOOLS_COMMAND="unzip -d $OTATOOLS_DIR $DIST_DIR/otatools.zip"
     command "$UNZIP_OTATOOLS_COMMAND"
@@ -331,8 +339,6 @@ function generate_ota_zip () {
     fi
 
     command "$MERGE_TARGET_FILES_COMMAND"
-
-    command "${RM} -rf ${OTATOOLS_DIR}"
 }
 
 function run_qiifa () {

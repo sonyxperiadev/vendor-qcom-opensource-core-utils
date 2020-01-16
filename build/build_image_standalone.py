@@ -1,0 +1,202 @@
+#!/usr/bin/env python
+
+# Copyright (c) 2020, The Linux Foundation. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
+#       with the distribution.
+#     * Neither the name of The Linux Foundation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+import argparse
+import fnmatch
+import logging
+import os
+import shutil
+import sys
+import tempfile
+from subprocess import call
+from zipfile import ZipFile
+
+logger = logging.getLogger(__name__)
+
+OUT_DIST = "out/dist/"
+BUILD_TOOLS_ZIP = "buildtools/buildtools.zip"
+
+# QSSI build's OUT_DIST artifacts (pattern supported):
+QSSI_OUT_DIST_ARTIFACTS = (
+    'otatools.zip',
+    BUILD_TOOLS_ZIP,
+    'qssi*-target_files-*.zip'
+)
+
+# TARGET build's OUT_DIST artifacts (pattern supported):
+TARGET_OUT_DIST_ARTIFACTS = (
+    'merge_config_*',
+    '*-target_files-*.zip'
+)
+
+# MERGED build's OUT_DIST OTA related artifacts that are optionally backed up
+# along with super.img via "--output_ota" arg (pattern supported):
+BACKUP_MERGED_OUT_DIST_ARTIFACTS = (
+    'merge_config_*',
+    'merged*-target_files*.zip',
+    'merged*-ota*.zip'
+)
+
+def call_func_with_temp_dir(func, keep_tmp):
+  temp_dir = tempfile.mkdtemp(prefix='merge_builds_')
+  try:
+    func(temp_dir)
+  finally:
+    if keep_tmp:
+      logger.info('keeping %s', temp_dir)
+    else:
+      shutil.rmtree(temp_dir, ignore_errors=True)
+
+def assert_path_readable(path):
+  assert os.access(path, os.R_OK), "Path \"" + path + "\" is not readable"
+
+def assert_path_writable(path):
+  assert os.access(path, os.W_OK), "Path \"" + path + "\" is not writable"
+
+def copy_items(from_dir, to_dir, files, list_identifier):
+  logging.info("Copying " + str(files) + " from \"" + from_dir + "\" to \"" + to_dir + "\"")
+  for file_path in files:
+    original_file_path = os.path.join(from_dir, file_path)
+    copied_file_path = os.path.join(to_dir, file_path)
+    copied_file_dir = os.path.dirname(copied_file_path)
+    if not os.path.exists(original_file_path):
+        logging.error("FAILED: Files: "+ list_identifier + ":" +str(original_file_path)+ " not found")
+        sys.exit(1)
+    if os.path.isdir(original_file_path):
+      if os.path.exists(copied_file_path):
+        shutil.rmtree(copied_file_path)
+      shutil.copytree(original_file_path, copied_file_path)
+    else:
+      if os.path.exists(copied_file_path):
+        os.remove(copied_file_path)
+      if not os.path.exists(copied_file_dir):
+        os.makedirs(copied_file_dir)
+      shutil.copyfile(original_file_path, copied_file_path)
+
+def copy_pattern_items(from_dir, to_dir, patterns, list_identifier):
+  file_paths = []
+  for dirpath, _, filenames in os.walk(from_dir):
+    file_paths.extend(
+        os.path.relpath(path=os.path.join(dirpath, filename), start=from_dir)
+        for filename in filenames)
+
+  filtered_file_paths = set()
+  for pattern in patterns:
+    filtered_file_paths.update(fnmatch.filter(file_paths, pattern))
+  if len(filtered_file_paths) == 0:
+    logging.error("FAILED: Files: "+ list_identifier + ":" +str(patterns)+ " not found")
+    sys.exit(1)
+  copy_items(from_dir, to_dir, filtered_file_paths, list_identifier)
+
+def fetch_build_artifacts(temp_dir, qssi_build_path, target_build_path,
+                        target_lunch):
+  copy_pattern_items(qssi_build_path + "/" + OUT_DIST, temp_dir + "/" + OUT_DIST, QSSI_OUT_DIST_ARTIFACTS, "QSSI_OUT_DIST_ARTIFACTS")
+  copy_pattern_items(target_build_path + "/" + OUT_DIST, temp_dir + "/" + OUT_DIST, TARGET_OUT_DIST_ARTIFACTS, "TARGET_OUT_DIST_ARTIFACTS")
+  with ZipFile(temp_dir + "/" + OUT_DIST + BUILD_TOOLS_ZIP, 'r') as zipObj:
+    zipObj.extractall(temp_dir)
+
+def build_superimage(temp_dir, qssi_build_path, target_build_path,
+                 merged_build_path, target_lunch, output_ota):
+  logging.info("Starting up builds merge..")
+  logging.info("QSSI build path = " + qssi_build_path)
+  logging.info("Target build path = " + target_build_path)
+  logging.info("Merged build path = " + merged_build_path)
+
+  # Ensure paths are readable/writable
+  assert_path_readable(qssi_build_path)
+  assert_path_readable(target_build_path)
+  if not os.path.exists(merged_build_path):
+    os.makedirs(merged_build_path)
+  assert_path_writable(merged_build_path)
+
+  # Fetch the build artifacts to temp dir
+  fetch_build_artifacts(temp_dir, qssi_build_path, target_build_path,
+                        target_lunch)
+  # Setup environment
+  logging.info("Setting up environment...")
+  os.environ["TARGET_PRODUCT"] = target_lunch
+  OUT_PATH = "out/target/product/" + target_lunch
+  os.environ["OUT"] = merged_build_path + "/" + OUT_PATH
+  if not os.path.exists(os.environ["OUT"]):
+    os.makedirs(os.environ["OUT"])
+  # Setup Java Path
+  with open(temp_dir + "/JAVA_HOME.txt") as fp:
+    JAVA_PREBUILT_PATH = fp.readline()
+  if JAVA_PREBUILT_PATH not in os.environ["PATH"]:
+    os.environ["PATH"] = temp_dir + "/" + JAVA_PREBUILT_PATH + "/bin" + ":" + os.environ["PATH"]
+  os.chdir(temp_dir)
+
+  logging.info("Triggering Merge Process and generating merged-target-files, OTA zip and super.img...")
+  cmd = ["bash", "vendor/qcom/opensource/core-utils/build/build.sh", "dist", "-j16", "--merge_only"]
+  logging.info("Running: " + str(cmd))
+  status = call(cmd)
+
+  if status != 0:
+   logging.error("FAILED:" + str(cmd))
+   sys.exit(1)
+
+  if output_ota:
+    copy_pattern_items(temp_dir + "/" + OUT_DIST, merged_build_path + "/" + OUT_DIST, BACKUP_MERGED_OUT_DIST_ARTIFACTS, "BACKUP_MERGED_OUT_DIST_ARTIFACTS")
+
+def main():
+  logging_format = '%(asctime)s - %(filename)s - %(levelname)-8s: %(message)s'
+  logging.basicConfig(level=logging.INFO, format=logging_format, datefmt='%Y-%m-%d %H:%M:%S')
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--image", dest='image',
+                    help="Image to be built", required=True)
+  parser.add_argument("--qssi_build_path", dest='qssi_build_path',
+                      help="QSSI build path", required=True)
+  parser.add_argument("--target_build_path", dest='target_build_path',
+                    help="Target build path", required=True)
+  parser.add_argument("--merged_build_path", dest='merged_build_path',
+                    help="Merged build path", required=True)
+  parser.add_argument("--target_lunch", dest='target_lunch',
+                    help="Target lunch name", required=True)
+  parser.add_argument("--keep_tmp",  dest='keep_tmp',
+                    help="Keep tmp dir for debugging", action='store_true')
+  parser.add_argument("--output_ota",  dest='output_ota',
+                    help="Outputs OTA related zips additionally", action='store_true')
+  args = parser.parse_args()
+
+  if args.image == "super":
+    call_func_with_temp_dir(
+        lambda temp_dir: build_superimage(
+            temp_dir=temp_dir,
+            qssi_build_path=os.path.abspath(args.qssi_build_path),
+            target_build_path=os.path.abspath(args.target_build_path),
+            merged_build_path=os.path.abspath(args.merged_build_path),
+            target_lunch=args.target_lunch,
+            output_ota=args.output_ota), args.keep_tmp)
+  else:
+    logging.error("No support to build \"" + args.image + "\" image, exiting..")
+
+if __name__ == '__main__':
+  main()
