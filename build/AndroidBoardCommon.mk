@@ -2,6 +2,8 @@
 # This makefile is used to add make rules which need to be included
 # before build/core/Makefile is included.
 
+LOCAL_PATH := $(call my-dir)
+
 #A/B builds require us to create the mount points at compile time.
 #Just creating it for all cases since it does not hurt.
 FIRMWARE_MOUNT_POINT := $(TARGET_OUT_VENDOR)/firmware_mnt
@@ -46,3 +48,5 @@ endif
 ifneq ($(strip $(BOARD_KERNEL_SEPARATED_DTBO)),)
 BOARD_PREBUILT_DTBOIMAGE := $(PRODUCT_OUT)/prebuilt_dtbo.img
 endif
+
+LIBION_HEADER_PATH_WRAPPER := $(LOCAL_PATH)/libion_header_paths/libion_path.mk
