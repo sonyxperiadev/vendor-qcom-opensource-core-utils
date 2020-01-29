@@ -96,7 +96,7 @@ if [ ! -e $QSSI_ENFORCED_TARGETS_FILE ]; then
     ${ECHO} "QSSI: not enabled for" "$TARGET_PRODUCT" "target as "$QSSI_ENFORCED_TARGETS_FILE" was not found."
     exit 0
 else
-    ALL_FLAG=`${GREP} -P "all$" $QSSI_ENFORCED_TARGETS_FILE`
+    ALL_FLAG=`${GREP} "all$" $QSSI_ENFORCED_TARGETS_FILE`
     if [ -z $ALL_FLAG ]; then
         TARGET_FLAG=`${GREP} $TARGET_PRODUCT $QSSI_ENFORCED_TARGETS_FILE`
         if [ -z $TARGET_FLAG ]; then
