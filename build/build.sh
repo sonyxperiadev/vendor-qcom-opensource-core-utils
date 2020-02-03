@@ -158,6 +158,9 @@ QSSI_ARGS="$ARGS ENABLE_AB=$ENABLE_AB"
 #This flag control dynamic partition enablement
 BOARD_DYNAMIC_PARTITION_ENABLE=false
 
+# Virtual-AB feature flag
+ENABLE_VIRTUAL_AB=false
+
 # OTA/Dist related variaibles
 QSSI_OUT="out/target/product/qssi"
 DIST_COMMAND="dist"
@@ -167,6 +170,7 @@ DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
 DIST_ENABLED_TARGET_LIST=("lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal")
+VIRTUAL_AB_ENABLED_TARGET_LIST=("kona" "lito")
 DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("lahaina" "kona" "msmnile" "sdm710" "lito" "trinket")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
@@ -193,8 +197,16 @@ do
     fi
 done
 
-# Set Dynamic Partitio value
-QSSI_ARGS="$QSSI_ARGS BOARD_DYNAMIC_PARTITION_ENABLE=$BOARD_DYNAMIC_PARTITION_ENABLE"
+for VIRTUAL_AB_TARGET in "${VIRTUAL_AB_ENABLED_TARGET_LIST[@]}"
+do
+    if [ "$TARGET_PRODUCT" == "$VIRTUAL_AB_TARGET" ]; then
+        ENABLE_VIRTUAL_AB=true
+        break
+    fi
+done
+
+# Pass Dynamic Partition and virtual-ab flags
+QSSI_ARGS="$QSSI_ARGS BOARD_DYNAMIC_PARTITION_ENABLE=$BOARD_DYNAMIC_PARTITION_ENABLE ENABLE_VIRTUAL_AB=$ENABLE_VIRTUAL_AB"
 
 # Set Shipping API level on target basis.
 SHIPPING_API_P="28"
