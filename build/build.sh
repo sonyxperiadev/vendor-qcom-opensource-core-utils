@@ -342,8 +342,8 @@ function generate_ota_zip () {
 }
 
 function run_qiifa () {
-    SP_HAL_LIST_PATH="$QCPATH/commonsys-intf/QIIFA/qiifa_abi_checker/dump_sp_hal_list.py"
-    QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA/qiifa_main.py"
+    SP_HAL_LIST_PATH="$QCPATH/commonsys-intf/QIIFA-fwk/plugins/qiifa_abi_checker/dump_sp_hal_list.py"
+    QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_main.py"
     if [ -f  $SP_HAL_LIST_PATH -a -f $QIIFA_SCRIPT ]; then
      command "python $SP_HAL_LIST_PATH"
      command "python $QIIFA_SCRIPT --type all"
