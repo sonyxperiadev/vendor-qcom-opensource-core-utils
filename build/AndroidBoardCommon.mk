@@ -41,6 +41,15 @@ ifneq ($(TARGET_MOUNT_POINTS_SYMLINKS),false)
 	@ln -sf /mnt/vendor/persist $(TARGET_ROOT_OUT)/persist
 endif
 
+ifeq ($(TARGET_ENABLE_VM_SUPPORT),true)
+VM_SYSTEM_MOUNT_POINT := $(TARGET_OUT_VENDOR)/vm-system
+$(VM_SYSTEM_MOUNT_POINT):
+	@echo "Creating $(VM_SYSTEM_MOUNT_POINT)"
+	@mkdir -p $(TARGET_OUT_VENDOR)/vm-system
+
+ALL_DEFAULT_INSTALLED_MODULES += $(VM_SYSTEM_MOUNT_POINT)
+endif
+
 # Defining BOARD_PREBUILT_DTBOIMAGE here as AndroidBoardCommon.mk
 # is included before build/core/Makefile, where it is required to
 # set the dependencies on prebuilt_dtbo.img based on definition of
