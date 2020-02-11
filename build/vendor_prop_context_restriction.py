@@ -59,6 +59,9 @@ import os, sys, argparse
 
 #global constants
 OUT = os.getenv("OUT")
+if OUT == None:
+    exit_with_warning("no out directory found. skipping check")
+
 PROPERTY_CONTEXT_FILE_PATH = OUT+ "/vendor/etc/selinux/vendor_property_contexts"
 VIOLATORS_OUTPUT_FILE = OUT+"/vendor_prop_context_violators.txt"
 ALLOWED_PROP_PREFIXES = ["ctl.odm.",
@@ -117,7 +120,14 @@ def check_context_restriction(prop_name_and_context):
                      not split_context[2].startswith(ALLOWED_CONTEXT_PREFIXES[1]):
         list_of_violator_props.append(prop_name_and_context[0] + "\t" + prop_name_and_context[1])
 
+def exit_with_warning(reason):
+    print "WARNING: " + reason
+    sys.exit(0)
+
 def main():
+    if not os.path.exists(PROPERTY_CONTEXT_FILE_PATH):
+        exit_with_warning(PROPERTY_CONTEXT_FILE_PATH + " doesn't exist. skipping check.")
+
     with open(PROPERTY_CONTEXT_FILE_PATH) as fd:
         line = fd.readline()
         while line:
