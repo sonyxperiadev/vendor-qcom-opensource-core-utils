@@ -432,6 +432,7 @@ else # For QSSI targets
     if [[ "$QSSI_ONLY" -eq 1 ]]; then
         log "Executing a QSSI only build ..."
         build_qssi_only
+        run_qiifa
     fi
 
     if [[ "$TARGET_ONLY" -eq 1 ]]; then
