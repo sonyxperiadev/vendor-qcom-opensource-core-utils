@@ -358,7 +358,7 @@ function run_qiifa () {
     QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_main.py"
     if [ -f  $SP_HAL_LIST_PATH -a -f $QIIFA_SCRIPT ]; then
      command "python $SP_HAL_LIST_PATH"
-     command "python $QIIFA_SCRIPT --type all"
+     command "python $QIIFA_SCRIPT --type all --enforced 0"
     fi
 }
 
@@ -374,7 +374,7 @@ function build_target_only () {
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
-    run_qiifa
+    command "run_qiifa"
 }
 
 function merge_only () {
