@@ -358,7 +358,7 @@ function run_qiifa () {
     QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_main.py"
     if [ -f  $SP_HAL_LIST_PATH -a -f $QIIFA_SCRIPT ]; then
      command "python $SP_HAL_LIST_PATH"
-     command "python $QIIFA_SCRIPT --type all --enforced 0"
+     command "python $QIIFA_SCRIPT --type all --enforced 1"
     fi
 }
 
