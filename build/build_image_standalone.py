@@ -40,8 +40,11 @@ from zipfile import ZipFile
 
 logger = logging.getLogger(__name__)
 
-OUT_DIST = "out/dist/"
 BUILD_TOOLS_ZIP = "buildtools/buildtools.zip"
+OUT_DIST        = "out/dist/"
+OUT_QSSI        = "out/target/product/qssi/"
+OUT_TARGET      = "" # will be set later, as per lunch
+QIIFA_DIR       = "QIIFA"
 
 # QSSI build's OUT_DIST artifacts (pattern supported):
 QSSI_OUT_DIST_ARTIFACTS = (
@@ -122,6 +125,53 @@ def fetch_build_artifacts(temp_dir, qssi_build_path, target_build_path,
   with ZipFile(temp_dir + "/" + OUT_DIST + BUILD_TOOLS_ZIP, 'r') as zipObj:
     zipObj.extractall(temp_dir)
 
+def run_qiifa_checks(temp_dir, qssi_build_path, target_build_path, merged_build_path, target_lunch):
+  logging.info("Starting QIIFA checks (to determine if the builds are compatible with each other):")
+
+  global OUT_TARGET
+
+  QIIFA_CHECKS_DIR = "QIIFA_CHECKS_DIR"
+  QIIFA_CHECKS_DIR_PATH = temp_dir + "/" + QIIFA_CHECKS_DIR + "/"
+  QIIFA_CHECKS_DIR_PATH_QSSI = QIIFA_CHECKS_DIR_PATH + "qssi"
+  QIIFA_CHECKS_DIR_PATH_TARGET = QIIFA_CHECKS_DIR_PATH + target_lunch
+
+  # Fetch the QIIFA script
+  QIIFA_SCRIPT = "qiifa_py2"
+  if os.path.exists(qssi_build_path + "/" + OUT_QSSI + QIIFA_DIR + "/" + QIIFA_SCRIPT):
+    # Check for QIIFA script from $OUT_QSSI/QIIFA path first
+    copy_items(qssi_build_path + "/" + OUT_QSSI + QIIFA_DIR + "/", QIIFA_CHECKS_DIR_PATH, [QIIFA_SCRIPT], "QIIFA_SCRIPT")
+  elif os.path.exists(qssi_build_path + "/out/host/linux-x86/bin/" + QIIFA_SCRIPT):
+    # Check for QIIFA script from host path if above one is not found
+    copy_items(qssi_build_path + "/out/host/linux-x86/bin/", QIIFA_CHECKS_DIR_PATH, [QIIFA_SCRIPT], "QIIFA_SCRIPT")
+  else:
+    logging.info("QIIFA script not found, skipping QIIFA check")
+    return
+
+  # Copy QIIFA cmds:
+  if not os.path.exists(qssi_build_path + "/" + OUT_QSSI + QIIFA_DIR):
+    logging.info("QIIFA cmd on QSSI side not found, skipping QIIFA check")
+    return
+  else:
+    copy_items(qssi_build_path + "/" + OUT_QSSI, QIIFA_CHECKS_DIR_PATH_QSSI, [QIIFA_DIR], "QIIFA_QSSI")
+
+  if not os.path.exists(target_build_path + "/" + OUT_TARGET + "/" + QIIFA_DIR):
+    logging.info("QIIFA cmd on Target side not found, skipping QIIFA check")
+    return
+  else:
+    copy_items(target_build_path + "/" + OUT_TARGET, QIIFA_CHECKS_DIR_PATH_TARGET, [QIIFA_DIR], "QIIFA_TARGET")
+
+  # Run QIIFA
+  os.chdir(QIIFA_CHECKS_DIR_PATH)
+  cmd = ["python", QIIFA_SCRIPT, "--qssi", "qssi", "--target", target_lunch]
+  logging.info("Running: " + str(cmd))
+  status = call(cmd)
+
+  if status == 0:
+    logging.info("QIIFA checks Passed, builds are compatible !")
+    copy_items(temp_dir, merged_build_path, [QIIFA_CHECKS_DIR], "QIIFA_CHECKS_DIR_BACKUP")
+  else:
+    logging.warning("QIIFA checks failed, Qssi and Target builds not compatible, continuing since we are in warning mode.")
+
 def build_superimage(temp_dir, qssi_build_path, target_build_path,
                  merged_build_path, target_lunch, output_ota):
   logging.info("Starting up builds merge..")
@@ -129,12 +179,18 @@ def build_superimage(temp_dir, qssi_build_path, target_build_path,
   logging.info("Target build path = " + target_build_path)
   logging.info("Merged build path = " + merged_build_path)
 
+  global OUT_TARGET
+  OUT_TARGET = "out/target/product/" + target_lunch
+
   # Ensure paths are readable/writable
   assert_path_readable(qssi_build_path)
   assert_path_readable(target_build_path)
   if not os.path.exists(merged_build_path):
     os.makedirs(merged_build_path)
   assert_path_writable(merged_build_path)
+
+  # Run QIIFA checks to ensure these builds are compatible, before merging them.
+  run_qiifa_checks(temp_dir, qssi_build_path, target_build_path, merged_build_path, target_lunch)
 
   # Fetch the build artifacts to temp dir
   fetch_build_artifacts(temp_dir, qssi_build_path, target_build_path,
@@ -148,10 +204,14 @@ def build_superimage(temp_dir, qssi_build_path, target_build_path,
     os.makedirs(os.environ["OUT"])
   # Setup Java Path
   with open(temp_dir + "/JAVA_HOME.txt") as fp:
-    JAVA_PREBUILT_PATH = fp.readline()
+    JAVA_PREBUILT_PATH = fp.readline().strip()
   if JAVA_PREBUILT_PATH not in os.environ["PATH"]:
     os.environ["PATH"] = temp_dir + "/" + JAVA_PREBUILT_PATH + "/bin" + ":" + os.environ["PATH"]
+
   os.chdir(temp_dir)
+  # Ensure java bins have execute permission
+  cmd = ["chmod", "+x", "-R", JAVA_PREBUILT_PATH]
+  status = call(cmd)
 
   logging.info("Triggering Merge Process and generating merged-target-files, OTA zip and super.img...")
   cmd = ["bash", "vendor/qcom/opensource/core-utils/build/build.sh", "dist", "-j16", "--merge_only"]
