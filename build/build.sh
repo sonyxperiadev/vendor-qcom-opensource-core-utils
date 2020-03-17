@@ -65,7 +65,14 @@
 #     Usage: ./build.sh dist -j32 --qssi_only (for only qssi build) or ./build.sh dist -j32 (for full build)
 #     Note: qssi_only and target_only options can be given together but merge_only should not be combined with
 #           any other options.
-BUILD_SH_VERSION=3
+# Version 4:
+#     Supports lunch qssi variant to build qssi only images.
+#     enables users to build standalone qssi images independent of any targets
+#     option(s): --qssi_only
+#     Usage: ./build.sh dist -j32 --qssi_only or ./build.sh dist -j32. Either way the outcome will be the same
+#     Note: --target_only and --merge_only options will throw an error with lunch qssi variant
+
+BUILD_SH_VERSION=4
 if [ "$1" == "--version" ]; then
     return $BUILD_SH_VERSION
     # Above return will work only if someone source'ed this script (which is expected, need to source the script).
@@ -129,7 +136,7 @@ done
 set -- "${MAKE_ARGUMENTS[@]}" # restore the argument list ($@) to be set to MAKE_ARGUMENTS
 
 # If none of the discrete options are passed, this is a full build
-if [[ "$MERGE_ONLY" != 1 && "$QSSI_ONLY" != 1 && "$TARGET_ONLY" != 1 ]]; then
+if [[ "$MERGE_ONLY" != 1 && "$QSSI_ONLY" != 1 && "$TARGET_ONLY" != 1 && "$TARGET_PRODUCT" != "qssi" ]]; then
     FULL_BUILD=1
 fi
 
@@ -140,7 +147,15 @@ if [[ "$MERGE_ONLY" == 1 ]]; then
     fi
 fi
 
-QSSI_TARGETS_LIST=("lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal")
+if [[ "$TARGET_PRODUCT" == "qssi" ]]; then
+    if [[ "$MERGE_ONLY" == 1 || "$TARGET_ONLY" == 1 ]]; then
+        echo "merge_only and target_only options aren't supported for lunch qssi variant"
+        exit 1
+    fi
+    QSSI_ONLY=1
+fi
+
+QSSI_TARGETS_LIST=("lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "qssi")
 QSSI_TARGET_FLAG=0
 
 # Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
@@ -169,9 +184,9 @@ QSSI_ARGS_WITHOUT_DIST=""
 DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
-DIST_ENABLED_TARGET_LIST=("lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll")
+DIST_ENABLED_TARGET_LIST=("lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll" "qssi")
 VIRTUAL_AB_ENABLED_TARGET_LIST=("kona" "lito")
-DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll")
+DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
 
@@ -398,11 +413,6 @@ function full_build () {
     fi
     merge_only
 }
-
-if [ "$TARGET_PRODUCT" == "qssi" ]; then
-    log "FAILED: lunch option should not be set to qssi. Please set a target out of the following QSSI targets: ${QSSI_TARGETS_LIST[@]}"
-    exit 1
-fi
 
 # Check if qssi is supported on this target or not.
 for QSSI_TARGET in "${QSSI_TARGETS_LIST[@]}"
