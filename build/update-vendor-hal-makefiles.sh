@@ -159,6 +159,29 @@ function generate_make_files() {
 function start_script_for_interfaces {
     #Find interfaces in workspace
     local interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+    ## Get list of valid folders for symlinked hal interfaces
+    local symlinked_interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/hal-interfaces 2>/dev/null)
+    ## Iterate only if any valid symlinked interfaces are present
+    if [ ! -z "$symlinked_interfaces" ]; then
+        for symlink_interface in $symlinked_interfaces; do
+            local hal_symlink_folders=$(${LS} -d $symlink_interface/* 2>/dev/null)
+            ## Create absolute path for new symlinked Interfaces
+            for folder in $hal_symlink_folders; do
+                if [[ -L "$folder" && -d "$folder" ]];then
+                    ## Add folder path in valid interfaces
+                    interfaces="$interfaces $folder"
+                else
+                    ## This is a condition where someone un-intentionally adding
+                    ## hal-interfaces folder through new git and contents  are not symlink.
+                    ## This is a rare conditon and mostly not possible if developers
+                    ## are creating full build and then submiting changes.
+                    ## Break build to prevent such changes from merging.
+                    ${ECHO} "Problem detected. hal-interfaces folder is re-used. Content : $folder"
+                    return 1
+                fi
+            done
+        done
+    fi
     if [ -f ${ANDROID_BUILD_TOP}/vendor/qcom/opensource/core-utils/build/hidl_gen_version ]; then
         HIDL_GEN_VERSION=$(${CAT} ${ANDROID_BUILD_TOP}/vendor/qcom/opensource/core-utils/build/hidl_gen_version | ${CUT} -d '=' -f 2)
     else
