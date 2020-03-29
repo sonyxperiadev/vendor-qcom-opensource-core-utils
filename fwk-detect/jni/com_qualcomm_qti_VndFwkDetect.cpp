@@ -32,11 +32,14 @@
 #include "vndfwk-detect.h"
 
 #include "jni.h"
-#include "JNIHelp.h"
 #include <dlfcn.h>
 #include <string.h>
 #include <android/log.h>
 #include <utils/Log.h>
+
+#ifndef NELEM
+#define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))
+#endif
 
 #define VNDFWK_DETECT_LIB "libqti_vndfwk_detect.so"
 
