@@ -190,7 +190,7 @@ MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
 DIST_ENABLED_TARGET_LIST=("taro" "lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll" "qssi")
 VIRTUAL_AB_ENABLED_TARGET_LIST=("kona" "lito" "taro" "lahaina")
-DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("taro" "lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi" "bengal")
+DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("taro" "lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi" "bengal" "sm6150")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
 
@@ -230,7 +230,7 @@ QSSI_ARGS="$QSSI_ARGS BOARD_DYNAMIC_PARTITION_ENABLE=$BOARD_DYNAMIC_PARTITION_EN
 # Set Shipping API level on target basis.
 SHIPPING_API_P="28"
 SHIPPING_API_Q="29"
-SHIPPING_API_P_TARGET_LIST=("sdm845" "sm6150")
+SHIPPING_API_P_TARGET_LIST=("sdm845")
 SHIPPING_API_LEVEL=$SHIPPING_API_Q
 for P_API_TARGET in "${SHIPPING_API_P_TARGET_LIST[@]}"
 do
