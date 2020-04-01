@@ -411,6 +411,9 @@ function full_build () {
     if [ -f  out/target/product/qssi/product.img ]; then
         command "cp out/target/product/qssi/product.img $OUT/"
     fi
+    if [ -f  out/target/product/qssi/system_ext.img ]; then
+        command "cp out/target/product/qssi/system_ext.img $OUT/"
+    fi
     merge_only
 }
 
