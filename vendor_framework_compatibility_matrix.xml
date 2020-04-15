@@ -685,6 +685,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <instance>default</instance>
         </interface>
     </hal>
+   <hal format="hidl" optional="true">
+        <name>vendor.qti.diaghal</name>
+        <version>1.0</version>
+        <interface>
+            <name>Idiag</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <!-- BluetoothSar service-->
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.bluetooth_sar</name>
