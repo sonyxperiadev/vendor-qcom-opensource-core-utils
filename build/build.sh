@@ -169,6 +169,10 @@ ENABLE_AB=${ENABLE_AB:-true}
 ARGS="$@"
 QSSI_ARGS="$ARGS ENABLE_AB=$ENABLE_AB"
 
+#This flag control system_ext logical partition enablement
+SYSTEMEXT_SEPARATE_PARTITION_ENABLE=false
+QSSI_ARGS="$QSSI_ARGS SYSTEMEXT_SEPARATE_PARTITION_ENABLE=$SYSTEMEXT_SEPARATE_PARTITION_ENABLE"
+
 # OTA/Dist related variables
 #This flag control dynamic partition enablement
 BOARD_DYNAMIC_PARTITION_ENABLE=false
@@ -345,6 +349,12 @@ function generate_ota_zip () {
     check_if_file_exists "$DIST_DIR/merge_config_system_misc_info_keys"
     check_if_file_exists "$DIST_DIR/merge_config_system_item_list"
     check_if_file_exists "$DIST_DIR/merge_config_other_item_list"
+
+#Remove the entries in merge config files in dist folder when disabling system_ext logical partition
+    if [ "$SYSTEMEXT_SEPARATE_PARTITION_ENABLE" = false ]; then
+        sed -i '/^SYSTEM_EXT/d' $DIST_DIR/merge_config_system_item_list
+        sed -i '/^system_ext/d' $DIST_DIR/merge_config_system_misc_info_keys
+    fi
 
     check_if_file_exists "$DIST_DIR/otatools.zip"
     log "Unpacking otatools.zip to $OTATOOLS_DIR"
