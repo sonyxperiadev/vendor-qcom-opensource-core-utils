@@ -155,7 +155,7 @@ if [[ "$TARGET_PRODUCT" == "qssi" ]]; then
     QSSI_ONLY=1
 fi
 
-QSSI_TARGETS_LIST=("lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "qssi")
+QSSI_TARGETS_LIST=("taro" "lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "qssi")
 QSSI_TARGET_FLAG=0
 
 # Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
@@ -188,9 +188,9 @@ QSSI_ARGS_WITHOUT_DIST=""
 DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
-DIST_ENABLED_TARGET_LIST=("lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll" "qssi")
-VIRTUAL_AB_ENABLED_TARGET_LIST=("kona" "lito" "lahaina")
-DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi" "bengal")
+DIST_ENABLED_TARGET_LIST=("taro" "lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll" "qssi")
+VIRTUAL_AB_ENABLED_TARGET_LIST=("kona" "lito" "taro" "lahaina")
+DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("taro" "lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi" "bengal")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
 
