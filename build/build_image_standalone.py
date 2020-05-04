@@ -38,6 +38,18 @@ import tempfile
 from subprocess import call
 from zipfile import ZipFile
 
+'''
+Script Versioning:
+
+Version 1.0:
+  Supports the following:
+  - Generates the Super image from the given Qssi and target builds.
+  - Outputs OTA zip as well, optionally.
+  - Enforces QIIFA checks, to ensure Qssi and target builds being combined
+    and compatible with each other.
+'''
+__version__ = '1.0'
+
 logger = logging.getLogger(__name__)
 
 BUILD_TOOLS_ZIP  = "buildtools/buildtools.zip"
@@ -252,6 +264,8 @@ def main():
                     help="Outputs OTA related zips additionally", action='store_true')
   parser.add_argument("--skip_qiifa",  dest='skip_qiifa',
                     help="Skips QIIFA checks (but this may just defer the real Qssi and target incompatibility issues until later)", action='store_true')
+  parser.add_argument('--version', action='version', version=__version__)
+
   args = parser.parse_args()
 
   if args.image == "super":
