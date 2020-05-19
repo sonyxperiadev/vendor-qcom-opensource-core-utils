@@ -60,6 +60,7 @@ SHA256SUM=`which sha256sum`
 SHA256SUM=${SHA256SU:-sha256sum}
 
 HIDL_GEN_VERSION=0
+HIDL_INTERFACES=""
 function generate_make_files() {
     local dir_path="$ANDROID_BUILD_TOP/$1"
     pushd $dir_path > /dev/null
@@ -156,9 +157,7 @@ function generate_make_files() {
     popd > /dev/null
 }
 
-function start_script_for_interfaces {
-    #Find interfaces in workspace
-    local interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+function add_symlinked_interfaces {
     ## Get list of valid folders for symlinked hal interfaces
     local symlinked_interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/hal-interfaces 2>/dev/null)
     ## Iterate only if any valid symlinked interfaces are present
@@ -169,7 +168,7 @@ function start_script_for_interfaces {
             for folder in $hal_symlink_folders; do
                 if [[ -L "$folder" && -d "$folder" ]];then
                     ## Add folder path in valid interfaces
-                    interfaces="$interfaces $folder"
+                    HIDL_INTERFACES="$HIDL_INTERFACES $folder"
                 else
                     ## This is a condition where someone un-intentionally adding
                     ## hal-interfaces folder through new git and contents  are not symlink.
@@ -182,6 +181,12 @@ function start_script_for_interfaces {
             done
         done
     fi
+}
+
+function start_script_for_interfaces {
+    #Find interfaces in workspace
+    HIDL_INTERFACES=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+    add_symlinked_interfaces
     if [ -f ${ANDROID_BUILD_TOP}/vendor/qcom/opensource/core-utils/build/hidl_gen_version ]; then
         HIDL_GEN_VERSION=$(${CAT} ${ANDROID_BUILD_TOP}/vendor/qcom/opensource/core-utils/build/hidl_gen_version | ${CUT} -d '=' -f 2)
     else
@@ -190,7 +195,7 @@ function start_script_for_interfaces {
     fi
     ${ECHO} "HIDL_GEN_VERSION=$HIDL_GEN_VERSION"
     ${ECHO} "HIDL interfaces:  Scanning for changes..."
-    for interface in $interfaces; do
+    for interface in $HIDL_INTERFACES; do
         #generate interfaces
         local relative_interface=${interface#${ANDROID_BUILD_TOP}/}
         generate_make_files $relative_interface "android.hidl:system/libhidl/transport"
@@ -205,19 +210,23 @@ function start_script_for_interfaces {
 }
 
 function generate_checksum_files {
-    local interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+    if [ -z "$HIDL_INTERFACES" ]; then
+        HIDL_INTERFACES=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+        add_symlinked_interfaces
+    fi
     ${MKDIR} -p ${ANDROID_BUILD_TOP}/out/vendor-hal
 
     ${SHA256SUM} `${FIND} ${ANDROID_BUILD_TOP}/system/tools/hidl -type f` > out/vendor-hal/hidl-gen.chksum$1
-    for interface in $interfaces; do
+    for interface in $HIDL_INTERFACES; do
         local intf_dir=$(${ECHO} $interface | ${SED} 's/\//-/g')
         ${LS} -1R $interface | ${SHA256SUM} > out/vendor-hal/$intf_dir.list$1
-        ${SHA256SUM} `${FIND} $interface -type f` > out/vendor-hal/$intf_dir.chksum$1
+        ${SHA256SUM} `${FIND} -L $interface -type f` > out/vendor-hal/$intf_dir.chksum$1
     done
 }
 
 function check_if_interfaces_changed {
-    local interfaces=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+    HIDL_INTERFACES=$(${LS} -d ${ANDROID_BUILD_TOP}/vendor/qcom/*/interfaces)
+    add_symlinked_interfaces
 
     $(generate_checksum_files .new)
 
@@ -230,7 +239,7 @@ function check_if_interfaces_changed {
         return 1;
     fi
 
-    for interface in $interfaces; do
+    for interface in $HIDL_INTERFACES; do
         local intf_dir=$(${ECHO} $interface | ${SED} 's/\//-/g')
         if [ -f ${ANDROID_BUILD_TOP}/out/vendor-hal/$intf_dir.list ]; then
             ${DIFF} -q ${ANDROID_BUILD_TOP}/out/vendor-hal/$intf_dir.list ${ANDROID_BUILD_TOP}/out/vendor-hal/$intf_dir.list.new> /dev/null
