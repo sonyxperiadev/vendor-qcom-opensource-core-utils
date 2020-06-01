@@ -406,6 +406,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         </interface>
     </hal>
     <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.eid</name>
+        <version>1.0</version>
+        <interface>
+            <name>IEid</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.tui_comm</name>
         <version>1.0</version>
         <interface>
