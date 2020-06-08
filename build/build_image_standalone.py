@@ -47,8 +47,13 @@ Version 1.0:
   - Outputs OTA zip as well, optionally.
   - Enforces QIIFA checks, to ensure Qssi and target builds being combined
     and compatible with each other.
+Version 1.1:
+  - Adds support for --no_tmp option, with which images are fetched directly to
+    merged_build_path for merge, instead of using /tmp. Useful on machines
+    having very less /tmp storage.
+  - Adds check for /tmp free space availablity at script start up.
 '''
-__version__ = '1.0'
+__version__ = '1.1'
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +87,13 @@ BACKUP_MERGED_OUT_DIST_ARTIFACTS = (
     'merged*-ota*.zip'
 )
 
-def call_func_with_temp_dir(func, keep_tmp):
-  temp_dir = tempfile.mkdtemp(prefix='merge_builds_')
+MIN_TMP_FREE_SIZE_IN_GB = 24
+
+def call_func_with_temp_dir(func, keep_tmp, no_tmp, merged_build_path):
+  if no_tmp:
+    temp_dir = merged_build_path + "/tmp"
+  else:
+    temp_dir = tempfile.mkdtemp(prefix='merge_builds_')
   try:
     func(temp_dir)
   finally:
@@ -199,11 +209,24 @@ def run_qiifa_checks(temp_dir, qssi_build_path, target_build_path, merged_build_
     qiifa_abort("QIIFA checks failed, Qssi and Target builds not compatible, aborting.")
 
 def build_superimage(temp_dir, qssi_build_path, target_build_path,
-                 merged_build_path, target_lunch, output_ota, skip_qiifa):
+                 merged_build_path, target_lunch, output_ota, skip_qiifa, no_tmp):
+  logging.info("Script Version : " + __version__)
   logging.info("Starting up builds merge..")
   logging.info("QSSI build path = " + qssi_build_path)
   logging.info("Target build path = " + target_build_path)
   logging.info("Merged build path = " + merged_build_path)
+
+  if not no_tmp:
+    # Ensure there is free space on /tmp
+    statvfs = os.statvfs('/tmp')
+    tmp_free_space = float(statvfs.f_frsize * statvfs.f_bavail)/(1024*1024*1024)
+    logging.info("Free Space available on /tmp = " + str(tmp_free_space) + "G")
+
+    if tmp_free_space < MIN_TMP_FREE_SIZE_IN_GB:
+      logging.error("Not enough free space available on /tmp, aborting, min free space required = " + str(MIN_TMP_FREE_SIZE_IN_GB) + "G !!")
+      logging.error("Free up /tmp manually, and/or Increase it using: sudo mount -o remount,size=" + str(MIN_TMP_FREE_SIZE_IN_GB) + "G" + " tmpfs /tmp")
+      logging.error("Or Alternatively, Use --no_tmp option while triggering build_image_standalone, to not use /tmp if it is a low RAM machine")
+      sys.exit(1)
 
   global OUT_TARGET
   OUT_TARGET = "out/target/product/" + target_lunch
@@ -232,8 +255,10 @@ def build_superimage(temp_dir, qssi_build_path, target_build_path,
   # Setup Java Path
   with open(temp_dir + "/JAVA_HOME.txt") as fp:
     JAVA_PREBUILT_PATH = fp.readline().strip()
-  if JAVA_PREBUILT_PATH not in os.environ["PATH"]:
-    os.environ["PATH"] = temp_dir + "/" + JAVA_PREBUILT_PATH + "/bin" + ":" + os.environ["PATH"]
+  os.environ["PATH"] = temp_dir + "/" + JAVA_PREBUILT_PATH + "/bin" + ":" + os.environ["PATH"]
+
+  if no_tmp:
+    os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = temp_dir
 
   os.chdir(temp_dir)
   # Ensure java bins have execute permission
@@ -273,6 +298,8 @@ def main():
                     help="Outputs OTA related zips additionally", action='store_true')
   parser.add_argument("--skip_qiifa",  dest='skip_qiifa',
                     help="Skips QIIFA checks (but this may just defer the real Qssi and target incompatibility issues until later)", action='store_true')
+  parser.add_argument("--no_tmp",  dest='no_tmp',
+                    help="Doesn't use tmp, instead uses merged_build_path to fetch images and merge", action='store_true')
   parser.add_argument('--version', action='version', version=__version__)
 
   args = parser.parse_args()
@@ -286,9 +313,11 @@ def main():
             merged_build_path=os.path.abspath(args.merged_build_path),
             target_lunch=args.target_lunch,
             output_ota=args.output_ota,
-            skip_qiifa=args.skip_qiifa), args.keep_tmp)
+            skip_qiifa=args.skip_qiifa,
+            no_tmp=args.no_tmp), args.keep_tmp, args.no_tmp, os.path.abspath(args.merged_build_path))
   else:
     logging.error("No support to build \"" + args.image + "\" image, exiting..")
+  logging.info("Completed Successfully!")
 
 if __name__ == '__main__':
   main()
