@@ -155,14 +155,38 @@ if [[ "$TARGET_PRODUCT" == "qssi" ]]; then
     QSSI_ONLY=1
 fi
 
-QSSI_TARGETS_LIST=("holi" "taro" "lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "qssi")
+QSSI_TARGETS_LIST=("holi" "taro" "lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "qssi" "bengal_32" "bengal_32go")
 QSSI_TARGET_FLAG=0
+
+
+case "$TARGET_PRODUCT" in
+    *_32)
+        TARGET_QSSI="qssi_32"
+        ;;
+    *_32go)
+        TARGET_QSSI="qssi_32go"
+        ;;
+    *)
+        TARGET_QSSI="qssi"
+        ;;
+esac
+
 
 # Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
 DATE=`which date`
 DATE=${DATE:-date}
 EPOCH_TIME=`${DATE} +%s`
 export BUILD_DATETIME="$EPOCH_TIME"
+
+NON_AB_TARGET_LIST=("bengal_32go")
+for NON_AB_TARGET in "${NON_AB_TARGET_LIST[@]}"
+do
+    if [ "$TARGET_PRODUCT" == "$NON_AB_TARGET" ]; then
+        log "${TARGET_PRODUCT} found in Non-A/B Target List"
+        ENABLE_AB=false
+        break
+    fi
+done
 
 # Default A/B configuration flag for all QSSI targets (not used for legacy targets).
 ENABLE_AB=${ENABLE_AB:-true}
@@ -181,16 +205,16 @@ BOARD_DYNAMIC_PARTITION_ENABLE=false
 ENABLE_VIRTUAL_AB=false
 
 # OTA/Dist related variaibles
-QSSI_OUT="out/target/product/qssi"
+QSSI_OUT="out/target/product/$TARGET_QSSI"
 DIST_COMMAND="dist"
 DIST_ENABLED=false
 QSSI_ARGS_WITHOUT_DIST=""
 DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
-DIST_ENABLED_TARGET_LIST=("holi" "taro" "lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll" "qssi")
+DIST_ENABLED_TARGET_LIST=("holi" "taro" "lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll" "qssi" "bengal_32" "bengal_32go")
 VIRTUAL_AB_ENABLED_TARGET_LIST=("kona" "lito" "taro" "lahaina")
-DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("holi" "taro" "lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi" "bengal" "sm6150")
+DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("holi" "taro" "lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi" "bengal" "bengal_32" "bengal_32go" "sm6150")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
 
@@ -307,8 +331,8 @@ function generate_dynamic_partition_images () {
        if [ "$DP_IMAGES_OVERRIDE" = true ]; then
            command "mkdir -p $DYNAMIC_PARTITIONS_IMAGES_PATH"
        fi
-       if [ -f "out/target/product/qssi/vbmeta_system.img" ]; then
-           command "cp out/target/product/qssi/vbmeta_system.img $OUT/"
+       if [ -f "$QSSI_OUT/vbmeta_system.img" ]; then
+           command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
        fi
        command "unzip -jo $MERGED_TARGET_FILES IMAGES/*.img -x IMAGES/userdata.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
        # TEMP FIX
@@ -388,7 +412,7 @@ function run_qiifa () {
 function build_qssi_only () {
     command "source build/envsetup.sh"
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
-    command "lunch qssi-${TARGET_BUILD_VARIANT}"
+    command "lunch ${TARGET_QSSI}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
 }
 
@@ -415,12 +439,12 @@ function full_build () {
     build_qssi_only
     build_target_only
     # Copy Qssi system|product.img to target folder so that all images can be picked up from one folder
-    command "cp out/target/product/qssi/system.img $OUT/"
-    if [ -f  out/target/product/qssi/product.img ]; then
-        command "cp out/target/product/qssi/product.img $OUT/"
+    command "cp $QSSI_OUT/system.img $OUT/"
+    if [ -f  $QSSI_OUT/product.img ]; then
+        command "cp $QSSI_OUT/product.img $OUT/"
     fi
-    if [ -f  out/target/product/qssi/system_ext.img ]; then
-        command "cp out/target/product/qssi/system_ext.img $OUT/"
+    if [ -f  $QSSI_OUT/system_ext.img ]; then
+        command "cp $QSSI_OUT/system_ext.img $OUT/"
     fi
     merge_only
 }
