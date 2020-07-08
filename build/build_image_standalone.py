@@ -52,15 +52,20 @@ Version 1.1:
     merged_build_path for merge, instead of using /tmp. Useful on machines
     having very less /tmp storage.
   - Adds check for /tmp free space availablity at script start up.
+Version 1.2:
+  - Adds support for 32-bit and Go targets
+  - Disable qiifa check for 32-bit and Go targets
 '''
-__version__ = '1.1'
+__version__ = '1.2'
 
 logger = logging.getLogger(__name__)
 
 BUILD_TOOLS_ZIP  = "buildtools/buildtools.zip"
 OUT_DIST         = "out/dist/"
-OUT_QSSI         = "out/target/product/qssi/"
+OUT_PREFIX       = "out/target/product/"
+OUT_QSSI         = "" # will be set later, as per lunch
 OUT_TARGET       = "" # will be set later, as per lunch
+QSSI_TARGET      = "" # will be set later, as per lunch
 QIIFA_DIR_QSSI   = "QIIFA_QSSI"
 QIIFA_DIR_TARGET = "QIIFA_TARGET"
 
@@ -70,7 +75,7 @@ QSSI_OUT_DIST_ARTIFACTS = (
     BUILD_TOOLS_ZIP
 )
 
-QSSI_TARGET_FILES_ZIP = "qssi*-target_files-*.zip"
+QSSI_TARGET_FILES_ZIP = "" # will be set later, as per lunch
 
 # TARGET build's OUT_DIST artifacts (pattern supported):
 TARGET_OUT_DIST_ARTIFACTS = (
@@ -229,7 +234,7 @@ def build_superimage(temp_dir, qssi_build_path, target_build_path,
       sys.exit(1)
 
   global OUT_TARGET
-  OUT_TARGET = "out/target/product/" + target_lunch
+  OUT_TARGET = OUT_PREFIX + target_lunch
 
   # Ensure paths are readable/writable
   assert_path_readable(qssi_build_path)
@@ -240,7 +245,10 @@ def build_superimage(temp_dir, qssi_build_path, target_build_path,
 
   # Run QIIFA checks to ensure these builds are compatible, before merging them.
   if not skip_qiifa:
-    run_qiifa_checks(temp_dir, qssi_build_path, target_build_path, merged_build_path, target_lunch)
+    if QSSI_TARGET == "qssi":
+      run_qiifa_checks(temp_dir, qssi_build_path, target_build_path, merged_build_path, target_lunch)
+    else:
+      logging.info("Skipping QIIFA checks for 32-bit and Go targets")
 
   # Fetch the build artifacts to temp dir
   fetch_build_artifacts(temp_dir, qssi_build_path, target_build_path,
@@ -303,6 +311,18 @@ def main():
   parser.add_argument('--version', action='version', version=__version__)
 
   args = parser.parse_args()
+
+  global QSSI_TARGET, OUT_QSSI, QSSI_TARGET_FILES_ZIP
+
+  if args.target_lunch.endswith("_32go"):
+    QSSI_TARGET="qssi_32go"
+  elif args.target_lunch.endswith("_32"):
+    QSSI_TARGET="qssi_32"
+  else:
+    QSSI_TARGET="qssi"
+
+  OUT_QSSI = OUT_PREFIX + QSSI_TARGET + "/"
+  QSSI_TARGET_FILES_ZIP = QSSI_TARGET + "-target_files-*.zip"
 
   if args.image == "super":
     call_func_with_temp_dir(
