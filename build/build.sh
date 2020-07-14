@@ -157,6 +157,7 @@ fi
 
 QSSI_TARGETS_LIST=("holi" "taro" "lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "qssi" "qssi_32" "qssi_32go" "bengal_32" "bengal_32go")
 QSSI_TARGET_FLAG=0
+SKIP_ABI_CHECKS=true
 
 
 case "$TARGET_PRODUCT" in
@@ -420,6 +421,7 @@ function build_target_only () {
     command "source build/envsetup.sh"
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
+    QSSI_ARGS="$QSSI_ARGS SKIP_ABI_CHECKS=$SKIP_ABI_CHECKS"
     command "make $QSSI_ARGS"
     command "run_qiifa"
 }
