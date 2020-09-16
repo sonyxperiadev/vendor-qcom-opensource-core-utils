@@ -335,7 +335,7 @@ function generate_dynamic_partition_images () {
        if [ -f "$QSSI_OUT/vbmeta_system.img" ]; then
            command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
        fi
-       command "unzip -jo $MERGED_TARGET_FILES IMAGES/*.img -x IMAGES/userdata.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
+       command "unzip -jo -DD $MERGED_TARGET_FILES IMAGES/*.img -x IMAGES/userdata.img -d $DYNAMIC_PARTITIONS_IMAGES_PATH"
        # TEMP FIX
        command "unzip $MERGED_TARGET_FILES IMAGES/* META/* */build.prop -d $MERGED_TARGET_FILES_DIR"
        # END TEMP FIX
