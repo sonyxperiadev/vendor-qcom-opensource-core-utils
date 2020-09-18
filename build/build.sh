@@ -179,7 +179,7 @@ DATE=${DATE:-date}
 EPOCH_TIME=`${DATE} +%s`
 export BUILD_DATETIME="$EPOCH_TIME"
 
-NON_AB_TARGET_LIST=("bengal_32go")
+NON_AB_TARGET_LIST=("qssi_32go" "bengal_32go")
 for NON_AB_TARGET in "${NON_AB_TARGET_LIST[@]}"
 do
     if [ "$TARGET_PRODUCT" == "$NON_AB_TARGET" ]; then
