@@ -71,8 +71,12 @@
 #     option(s): --qssi_only
 #     Usage: ./build.sh dist -j32 --qssi_only or ./build.sh dist -j32. Either way the outcome will be the same
 #     Note: --target_only and --merge_only options will throw an error with lunch qssi variant
-
-BUILD_SH_VERSION=4
+# Version 5:
+#     Supports --tech_package argument for checking backward compatibility of Android.bp Modules.
+#     options: Comma(',') seperated tech_packages name and give :golden at the end if we want to generate
+#     Golden abi-dumps.
+#     Note: By default it will run in checking mode.
+BUILD_SH_VERSION=5
 if [ "$1" == "--version" ]; then
     return $BUILD_SH_VERSION
     # Above return will work only if someone source'ed this script (which is expected, need to source the script).
@@ -110,6 +114,7 @@ MERGE_ONLY=0
 QSSI_ONLY=0
 TARGET_ONLY=0
 FULL_BUILD=0
+LIST_TECH_PACKAGE=""
 
 while [[ $# -gt 0 ]]
     do
@@ -125,6 +130,10 @@ while [[ $# -gt 0 ]]
             ;;
         *target_only)
             TARGET_ONLY=1
+            shift
+            ;;
+        --tech_package*)
+            LIST_TECH_PACKAGE="$LIST_TECH_PACKAGE$arg"
             shift
             ;;
         *)  # all other option
@@ -403,7 +412,26 @@ function generate_ota_zip () {
     command "$MERGE_TARGET_FILES_COMMAND"
 }
 
+function run_qiifa_initialization() {
+    QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_techpackage_initialization.py"
+    IFS=':' read -ra ADDR <<< "${LIST_TECH_PACKAGE:15}"
+    if [[ -f $QIIFA_SCRIPT ]]; then
+     command "python $QIIFA_SCRIPT ${ADDR[0]}"
+    fi
+}
+
+function run_qiifa_for_techpackage () {
+    QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_main.py"
+    if [ -f $QIIFA_SCRIPT ]; then
+     command "python $QIIFA_SCRIPT --create techpackage --enforced 1"
+    fi
+}
+
 function run_qiifa () {
+    IFS=':' read -ra ADDR <<< "${LIST_TECH_PACKAGE:15}"
+    if [[ -n ${ADDR[1]} && "${ADDR[1]}" == "golden" ]]; then
+      command "run_qiifa_for_techpackage"
+    fi
     QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_main.py"
     if [ -f $QIIFA_SCRIPT ]; then
      command "python $QIIFA_SCRIPT --type all --enforced 1"
@@ -422,6 +450,9 @@ function build_target_only () {
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
     QSSI_ARGS="$QSSI_ARGS SKIP_ABI_CHECKS=$SKIP_ABI_CHECKS"
+    if [ -n "$LIST_TECH_PACKAGE" ]; then
+      command "run_qiifa_initialization"
+    fi
     command "make $QSSI_ARGS"
     command "run_qiifa"
 }
