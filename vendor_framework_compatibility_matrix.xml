@@ -917,7 +917,16 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <instance>default</instance>
         </interface>
     </hal>
-
+    <!-- Audio Platform adatation service -->
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.pal</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IPAL</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
        <name>vendor.qti.hardware.wifi.wifimyftm</name>
        <transport>hwbinder</transport>
