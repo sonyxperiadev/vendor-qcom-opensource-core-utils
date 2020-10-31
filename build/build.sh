@@ -348,7 +348,7 @@ function generate_dynamic_partition_images () {
        # TEMP FIX
        command "unzip $MERGED_TARGET_FILES IMAGES/* META/* */build.prop -d $MERGED_TARGET_FILES_DIR"
        # END TEMP FIX
-       command "$OTATOOLS_DIR/releasetools/build_super_image.py --path $OTATOOLS_DIR $MERGED_TARGET_FILES_DIR $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
+       command "$OTATOOLS_DIR/bin/build_super_image --path $OTATOOLS_DIR $MERGED_TARGET_FILES_DIR $DYNAMIC_PARTITIONS_IMAGES_PATH/super.img"
        command "${RM} -rf ${MERGED_TARGET_FILES_DIR}"
     else
         command "cp $QSSI_OUT/vbmeta_system.img $OUT/"
@@ -395,7 +395,7 @@ function generate_ota_zip () {
     UNZIP_OTATOOLS_COMMAND="unzip -d $OTATOOLS_DIR $DIST_DIR/otatools.zip"
     command "$UNZIP_OTATOOLS_COMMAND"
 
-    MERGE_TARGET_FILES_COMMAND="$OTATOOLS_DIR/releasetools/merge_target_files.py \
+    MERGE_TARGET_FILES_COMMAND="$OTATOOLS_DIR/bin/merge_target_files \
         --path $OTATOOLS_DIR \
         --framework-target-files $FRAMEWORK_TARGET_FILES \
         --vendor-target-files $VENDOR_TARGET_FILES \
