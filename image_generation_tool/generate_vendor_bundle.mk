@@ -2,7 +2,7 @@
 # image_generation_tool to generate boot and vbmeta images.
 
 IMAGE_GEN_TOOL := out/host/linux-x86/bin/image_generation_tool
-IMAGE_GEN_TOOL_VERSION := 1.0
+IMAGE_GEN_TOOL_VERSION := 1.1
 
 VENDOR_BUNDLE_DEPS := \
   $(PRODUCT_OUT)/vendor.img \
