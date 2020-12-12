@@ -13,7 +13,7 @@ VENDOR_BUNDLE_DEPS := \
 generate_vendor_bundle: $(VENDOR_BUNDLE_DEPS)
 	python $(IMAGE_GEN_TOOL) generate_vendor_bundle --tool_version $(IMAGE_GEN_TOOL_VERSION)
 
-ifeq ($(filter $(TARGET_BOARD_PLATFORM), taro),$(TARGET_BOARD_PLATFORM))
+ifeq ($(TARGET_USES_IMAGE_GEN_TOOL),true)
 ifeq ($(BOARD_AVB_ENABLE),true)
 droidcore:generate_vendor_bundle
 endif
