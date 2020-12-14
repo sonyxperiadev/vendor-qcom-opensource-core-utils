@@ -907,5 +907,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
            <instance>default</instance>
        </interface>
     </hal>
-
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.hardware.display.config</name>
+        <interface>
+            <name>IDisplayConfig</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
 </compatibility-matrix>
