@@ -45,13 +45,15 @@ scheme. It also abstracts out the underlying parameters needed to generate
 both boot and vbmeta images by providing a simple interface to the client.
 
 usage: python image_generation_tool [-h]
-       {version,generate_boot_image,generate_vbmeta_image,info_vbmeta_image}
+       {version,generate_boot_image,generate_vendor_boot_image,
+       generate_vbmeta_image,info_vbmeta_image}
 
 subcommands:
-    version                Prints the version of image_generation_tool
-    generate_boot_image    Generates boot image
-    generate_vbmeta_image  Generates vbmeta image
-    info_vbmeta_image      Shows information about vbmeta image
+    version                    Prints the version of image_generation_tool
+    generate_boot_image        Generates boot image
+    generate_vendor_boot_image Generates vendor_boot_image
+    generate_vbmeta_image      Generates vbmeta image
+    info_vbmeta_image          Shows information about vbmeta image
 
 
 subcommands usage and parameters:
@@ -79,7 +81,23 @@ required arguments:
   --ramdisk IMAGE              Path to ramdisk.img e.g. foo/bar/ramdisk.img
   --output IMAGE               Path to generated boot.img e.g. foo/bar/boot.img
 
-3) generate_vbmeta_image
+3) generate_vendor_boot_image
+
+usage: image_generation_tool generate_vendor_boot_image [-h]
+       --tool_version TOOL_VERSION --vendor_bundle PATH --dtb IMAGE
+       --vendor_ramdisk IMAGE --output IMAGE
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+required arguments:
+  --tool_version TOOL_VERSION  Tool version e.g. 1.2
+  --vendor_bundle              Path to vendor bundle e.g. foo/bar/boo/
+  --dtb IMAGE                  Path to dtb.img e.g. foo/bar/dtb.img
+  --vendor_ramdisk IMAGE       Path to vendor_ramdisk.img e.g. foo/bar/vendor_ramdisk.img
+  --output IMAGE               Path to generated boot.img e.g. foo/bar/boot.img
+
+4) generate_vbmeta_image
 
 usage: image_generation_tool generate_vbmeta_image [-h]
         --tool_version TOOL_VERSION --vendor_bundle PATH --boot IMAGE
@@ -99,7 +117,7 @@ required arguments:
   --odm IMAGE                  Path to odm.img e.g. foo/bar/odm.img
   --output IMAGE               Path to generated vbmeta.img e.g. foo/bar/vbmeta.img
 
-4) info_vbmeta_image
+5) info_vbmeta_image
 
 usage: image_generation_tool info_vbmeta_image [-h]
        --tool_version TOOL_VERSION --vendor_bundle PATH --image IMAGE --output OUTPUT
@@ -114,16 +132,17 @@ required arguments:
                                  e.g. foo/bar/vbmeta.img
   --output OUTPUT                Output file name e.g. foo/bar/info_vbmeta.txt
 
-5) generate_vendor_bundle
+6) generate_vendor_bundle
 
 usage: python image_generation_tool generate_vendor_bundle [-h]
-       --tool_version TOOL_VERSION
+       --tool_version TOOL_VERSION --product_out PRODUCT_OUT
 
 optional arguments:
   -h, --help            show this help message and exit
 
 required arguments:
   --tool_version TOOL_VERSION  Tool version e.g. 1.0
+  --product_out PRODUCT_OUT    The name of the target e.g. taro
 
 This function is used to create a bundle during vendor SI compilation.
 image_generation_tool along with the vendor and the system bundle can
@@ -153,18 +172,23 @@ Bundle location and contents:
 Script Versioning:
 
 Version 1.0:
-    - Provides subcommand 'version' to get tool version
-    - Provides subcommand 'generate_boot_image' to generate boot image
-    - Provides subcommand 'generate_vbmeta_image' to generate vbmeta image
-    - Provides subcommand 'info_vbmeta_image' to show vbmeta image information
+    - Provides subcommand 'version' to get tool version.
+    - Provides subcommand 'generate_boot_image' to generate boot image.
+    - Provides subcommand 'generate_vbmeta_image' to generate vbmeta image.
+    - Provides subcommand 'info_vbmeta_image' to show vbmeta image information.
 
 Version 1.1:
     - Provides user the option to provide vendor bundle path using
-      following command - "--vendor_bundle PATH"
+      following command - "--vendor_bundle PATH".
 
+Version 1.2:
+    - Provides subcommand 'generate_vendor_boot_image' to generate
+      vendor_boot image.
+    - Subcommand generate_vendor_bundle command now requires PRODUCT_OUT to be 
+      passed with it.
 """
 IMAGE_GEN_TOOL_VERSION_MAJOR = 1
-IMAGE_GEN_TOOL_VERSION_MINOR = 1
+IMAGE_GEN_TOOL_VERSION_MINOR = 2
 
 """Define Constants"""
 BUNDLE_DIR = "vendor_image_gen_tool_bundle/"
@@ -187,11 +211,11 @@ class Dictionary:
         pass
 
     @staticmethod
-    def LoadDictionaryFromFile(input_file, vendorBundle):
+    def LoadDictionaryFromFile(input_file, vendor_bundle):
         try:
             d = {}
-            if vendorBundle[-1] != '/':
-                vendorBundle += '/'
+            if vendor_bundle[-1] != '/':
+                vendor_bundle += '/'
             with open(input_file, 'r') as misc_info:
                 for line in misc_info:
                     line = line.strip()
@@ -206,9 +230,9 @@ class Dictionary:
             d['boot_partition_name'] = 'boot'
             d['vendor_boot_partition_name'] = 'vendor_boot'
             d['dtbo_partition_name'] = 'dtbo'
-            d['test_key'] = vendorBundle + "test_key/" + d.get(
+            d['test_key'] = vendor_bundle + "test_key/" + d.get(
                 'avb_vbmeta_key_path').split("/")[-1]
-            d['public_key'] = vendorBundle + "public_key/avb-sFeCqq.avbpubkey"
+            d['public_key'] = vendor_bundle + "public_key/avb-sFeCqq.avbpubkey"
 
             return d
         except Exception as e:
@@ -217,7 +241,7 @@ class Dictionary:
 class ImageGen(object):
     """Business logic for image generation command-line tool"""
 
-    def generate_vendor_bundle(self, tool_version):
+    def generate_vendor_bundle(self, tool_version, product_out):
         """Implements 'generate_vendor_bundle' command"""
 
         """
@@ -297,7 +321,36 @@ class ImageGen(object):
                     raise ImageGenError(
                         'Failed to add hash footer: {}'.format(perr))
 
-            if tool_version == '1.0' or tool_version == '1.1':
+            def write_board_config_data_into_config_file(dest, croot):
+                board_config_file = open(croot + 'device/qcom/' + product_out
+                                  + '/BoardConfig.mk', 'r')
+                lines = board_config_file.readlines()
+                vendor_boot_data = {}
+                for line in lines:
+                    wordsList = line.split()
+                    if len(wordsList) > 1 and wordsList[1] == ':=':
+                        if wordsList[0] == 'BOARD_KERNEL_CMDLINE':
+                            vendor_boot_data['vendor_boot_cmdline'
+                            ] = '--vendor_cmdline ' + " ".join(wordsList[2:])
+                            vendor_boot_data['vendor_boot_cmdline'
+                            ] += ' buildvariant=' + os.environ['TARGET_BUILD_VARIANT']
+                        elif wordsList[0] == 'BOARD_KERNEL_BASE':
+                            vendor_boot_data['vendor_boot_base'
+                            ] = '--base ' + " ".join(wordsList[2:])
+                        elif wordsList[0] == 'BOARD_KERNEL_PAGESIZE':
+                            vendor_boot_data['vendor_boot_pagesize'
+                            ] = '--pagesize ' + " ".join(wordsList[2:])
+                board_config_file.close()
+                vendor_bundle_config_file = open(dest, 'a+')
+                for d in vendor_boot_data:
+                    t_data = d + '=' + vendor_boot_data[d]+ "\n"
+                    vendor_bundle_config_file.write(t_data)
+                vendor_bundle_config_file.close()
+
+
+            if (tool_version == '1.0' or
+                tool_version == '1.1' or
+                tool_version == '1.2'):
                 """
                 Create dir to store
                     i)   mkbootimg.py, avbtool.py in 'upstream_tools' folder
@@ -306,17 +359,14 @@ class ImageGen(object):
                     iv)  Extracted public key in 'public_key' folder
 
                 """
-
                 product_host_out = os.getcwd() + "/out/host/linux-x86/bin/"
                 croot = os.getcwd() + "/"
-
                 tools_dir = {
                     "config_dir": BUNDLE_DIR + "config/",
                     "upstream_tools_dir": BUNDLE_DIR + "upstream_tools/",
                     "test_key_dir": BUNDLE_DIR + "test_key/",
                     "public_key_dir": BUNDLE_DIR + "public_key/"
                 }
-
                 for d in tools_dir.values():
                     create_dir(os.path.join(product_host_out, d))
 
@@ -325,12 +375,12 @@ class ImageGen(object):
                 create a dictionary
 
                 """
-
-                product_out = croot + "out/target/product/" + os.environ[
-                            'TARGET_PRODUCT'] + "/"
-                src = product_out + "misc_info.txt"
+                product_out = product_out.split('/')[-1]
+                src = croot + "out/target/product/" + product_out + "/"
+                src += "misc_info.txt"
                 dest = product_host_out + tools_dir.get('config_dir') + "misc_info.txt"
                 copy_file(src, dest)
+                write_board_config_data_into_config_file(dest, croot)
                 tools_dict = Dictionary.LoadDictionaryFromFile(dest, BUNDLE_DIR)
 
                 """
@@ -383,12 +433,13 @@ class ImageGen(object):
         except Exception as e:
             print(e)
 
-    def generate_boot_image(self, tool_version, vendorBundle, kernel, ramdisk, output):
+    def generate_boot_image(self, tool_version, vendor_bundle,
+                            kernel, ramdisk, output):
         """Implements 'generate_boot_image' command.
 
         Arguments:
             tool_version: Tool version
-            vendorBundle: Path to vendor bundle
+            vendor_bundle: Path to vendor bundle
             kernel: Path to kernel zImage
             ramdisk: Path to ramdisk image
             mkbootimg_args: Boot header_version
@@ -398,15 +449,17 @@ class ImageGen(object):
         """
         try:
 
-            if vendorBundle[-1] != '/':
-                vendorBundle += '/'
+            if vendor_bundle[-1] != '/':
+                vendor_bundle += '/'
 
             if tool_version == '1.0' or tool_version == '1.1':
-                input_file = vendorBundle + "config/misc_info.txt"
-                config_dict = Dictionary.LoadDictionaryFromFile(input_file, vendorBundle)
+                input_file = vendor_bundle + "config/misc_info.txt"
+                config_dict = Dictionary.LoadDictionaryFromFile(input_file,
+                                                                vendor_bundle)
 
-                args = [vendorBundle + "upstream_tools/mkbootimg.py", "--kernel", kernel,
-                    "--ramdisk", ramdisk, "--output", output]
+                args = [vendor_bundle + "upstream_tools/mkbootimg.py",
+                        "--kernel", kernel,
+                        "--ramdisk", ramdisk, "--output", output]
 
                 mkbootimg_args = config_dict.get('mkbootimg_args')
                 if mkbootimg_args and mkbootimg_args.strip():
@@ -435,13 +488,77 @@ class ImageGen(object):
         except Exception as e:
             print(e)
 
-    def generate_vbmeta_image(self, tool_version, vendorBundle, boot, vendor_boot, dtbo,
+    def generate_vendor_boot_image(self, tool_version, vendor_bundle, dtb,
+                                  vendor_ramdisk, output):
+        """Implements 'generate_vendor_boot_image' command.
+
+        Arguments:
+            tool_version: Tool version
+            vendor_bundle: Path to vendor bundle
+            dtb: Path to dtb.img
+            vendor_ramdisk: Path to vendor_ramdisk.img
+            mkbootimg_args: Boot header_version
+            mkbootimg_version_args: os_version and os_patch_level
+            output: File to write the image to
+
+        """
+        try:
+
+            if vendor_bundle[-1] != '/':
+                vendor_bundle += '/'
+
+            if tool_version == '1.2':
+                input_file = vendor_bundle + "config/misc_info.txt"
+                config_dict = Dictionary.LoadDictionaryFromFile(input_file, vendor_bundle)
+                args = [vendor_bundle + "upstream_tools/mkbootimg.py", "--dtb", dtb]
+                vendor_boot_cmdline = config_dict.get('vendor_boot_cmdline')
+                if vendor_boot_cmdline and vendor_boot_cmdline.strip():
+                    tempSplitList = vendor_boot_cmdline.split()
+                    args.extend([tempSplitList[0]," ".join(tempSplitList[1:])])
+
+                vendor_boot_base = config_dict.get('vendor_boot_base')
+                if vendor_boot_base and vendor_boot_base.strip():
+                    args.extend(shlex.split(vendor_boot_base))
+
+                vendor_boot_pagesize = config_dict.get('vendor_boot_pagesize')
+                if vendor_boot_pagesize and vendor_boot_pagesize.strip():
+                    args.extend(shlex.split(vendor_boot_pagesize))
+
+                mkbootimg_args = config_dict.get('mkbootimg_args')
+                if mkbootimg_args and mkbootimg_args.strip():
+                    args.extend(shlex.split(mkbootimg_args))
+
+                mkbootimg_version_args = config_dict.get('mkbootimg_version_args')
+                if mkbootimg_version_args and mkbootimg_version_args.strip():
+                    args.extend(shlex.split(mkbootimg_version_args))
+
+                args.extend(["--vendor_ramdisk", vendor_ramdisk, "--vendor_boot", output])
+                p = subprocess.Popen(args,
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+
+                (pout, perr) = p.communicate()
+
+                if p.wait() != 0:
+                    raise ImageGenError(
+                        'Failed to generate vendor boot image: {}'.format(perr))
+                else:
+                    print("\nGenerated vendor_boot.img successfully!\n")
+            else:
+                print("\nTool version specified does not match supported versions."
+                    " Use 'python image_generation_tool version' to"
+                    " get the latest tool version\n")
+        except Exception as e:
+            print(e)
+
+    def generate_vbmeta_image(self, tool_version, vendor_bundle, boot, vendor_boot, dtbo,
         vendor, odm, output):
         """Implements 'generate_vbmeta_image' command.
 
         Arguments:
             tool_version: Tool version
-            vendorBundle: Path to vendor bundle
+            vendor_bundle: Path to vendor bundle
             boot: Path to boot.img
             vendor_boot: Path to vendor_boot.img
             dtbo: Path to dtbo.img
@@ -470,7 +587,7 @@ class ImageGen(object):
 
                 """
 
-                args = [vendorBundle + "upstream_tools/avbtool.py",
+                args = [vendor_bundle + "upstream_tools/avbtool.py",
                         "add_hash_footer", "--image", image,
                         "--partition_name", partition_name,
                         "--partition_size", partition_size]
@@ -525,18 +642,18 @@ class ImageGen(object):
                                             partition_size_list[index],
                                             partition_avb_args_list[index])
 
-            if vendorBundle[-1] != '/':
-                vendorBundle += '/'
+            if vendor_bundle[-1] != '/':
+                vendor_bundle += '/'
 
             if tool_version == '1.0' or tool_version == '1.1':
-                input_file = vendorBundle + "config/misc_info.txt"
-                config_dict = Dictionary.LoadDictionaryFromFile(input_file, vendorBundle)
+                input_file = vendor_bundle + "config/misc_info.txt"
+                config_dict = Dictionary.LoadDictionaryFromFile(input_file, vendor_bundle)
 
                 """Add hash_footer to boot, vendor_boot and dtbo images"""
                 add_hash_footer_to_vbmeta_images(boot, vendor_boot, dtbo, config_dict)
 
                 """Generate vbmeta image"""
-                args = [vendorBundle + "upstream_tools/avbtool.py", "make_vbmeta_image",
+                args = [vendor_bundle + "upstream_tools/avbtool.py", "make_vbmeta_image",
                         "--output", output, "--key", config_dict.get('test_key'),
                         "--algorithm", config_dict.get('avb_vbmeta_algorithm')]
 
@@ -576,22 +693,22 @@ class ImageGen(object):
             print(e)
 
 
-    def info_vbmeta_image(self, tool_version, vendorBundle, image, output):
+    def info_vbmeta_image(self, tool_version, vendor_bundle, image, output):
         """Implements 'info_vbmeta_image' command.
 
         Arguments:
             tool_version: Tool version
-            vendorBundle: Path to vendor bundle
+            vendor_bundle: Path to vendor bundle
             image_filename: Image file to get information from
             output: Output file to write human-readable information to
 
         """
         try:
-            if vendorBundle[-1] != '/':
-                vendorBundle += '/'
+            if vendor_bundle[-1] != '/':
+                vendor_bundle += '/'
 
             if tool_version == '1.0' or tool_version == '1.1':
-                args = [vendorBundle + "upstream_tools/avbtool.py", "info_image",
+                args = [vendor_bundle + "upstream_tools/avbtool.py", "info_image",
                         "--image", image, "--output", output]
                 p = subprocess.Popen(args,
                                     stdin=subprocess.PIPE,
@@ -624,14 +741,18 @@ class ImageGenTool(object):
         try:
             """Parse cmdline and initialize """
             parser = argparse.ArgumentParser()
-            subparsers = parser.add_subparsers(title='subcommands', metavar=
-            '{version, generate_boot_image, generate_vbmeta_image, info_vbmeta_image}')
+            subparsers = parser.add_subparsers(title='subcommands',
+            metavar='{version, generate_boot_image, generate_vbmeta_image, '
+            +'generate_vendor_boot_image, info_vbmeta_image}')
 
             """Sub command to create vendor SI bundle needed for the tool"""
             sub_parser = subparsers.add_parser('generate_vendor_bundle')
             required_args = sub_parser.add_argument_group('required arguments')
             required_args.add_argument('--tool_version',
                                     help='Tool version e.g. 1.0',
+                                    required=True)
+            required_args.add_argument('--product_out',
+                                    help="The name of the target e.g. taro",
                                     required=True)
             required_args.add_argument('--vendor_bundle',
                                     help="Path to vendor bundle e.g. foo/bar/boo/",
@@ -670,6 +791,35 @@ class ImageGenTool(object):
                                     metavar='IMAGE',
                                     required=True)
             sub_parser.set_defaults(func=self.generate_boot_image)
+
+            """Sub command to generate vendor_boot image"""
+            sub_parser = subparsers.add_parser('generate_vendor_boot_image',
+                                            help='Generates vendor_boot image.'+
+                                            'Note: Available only from verion '+
+                                            '1.2 onwards.')
+            required_args = sub_parser.add_argument_group('required arguments')
+            required_args.add_argument('--tool_version',
+                                    help='Tool version e.g. 1.2',
+                                    required=True)
+            required_args.add_argument('--vendor_bundle',
+                                    help="Path to vendor bundle e.g. foo/bar/boo/",
+                                    default="vendor_image_gen_tool_bundle/")
+            required_args.add_argument('--dtb',
+                                    help='Path to dtb.img'
+                                            ' e.g. foo/bar/dtb',
+                                    metavar='IMAGE',
+                                    required=True)
+            required_args.add_argument('--vendor_ramdisk',
+                                    help='Path to vendor_ramdisk.img'
+                                            ' e.g. foo/bar/vendor_ramdisk.img',
+                                    metavar='IMAGE',
+                                    required=True)
+            required_args.add_argument('--output',
+                                    help='Path to generated vendor_boot.img'
+                                            ' e.g. foo/bar/vendor_boot.img',
+                                    metavar='IMAGE',
+                                    required=True)
+            sub_parser.set_defaults(func=self.generate_vendor_boot_image)
 
             """Sub command to generate vbmeta image"""
             sub_parser = subparsers.add_parser('generate_vbmeta_image',
@@ -748,7 +898,8 @@ class ImageGenTool(object):
 
     def generate_vendor_bundle(self, args):
         """Implements 'generate_vendor_bundle' sub-command"""
-        self.image_gen.generate_vendor_bundle(args.tool_version)
+        self.image_gen.generate_vendor_bundle(args.tool_version,
+                                              args.product_out)
 
     def get_tool_version(self, _):
         """Implements 'version' sub-command"""
@@ -761,6 +912,14 @@ class ImageGenTool(object):
                                            args.kernel,
                                            args.ramdisk,
                                            args.output)
+
+    def generate_vendor_boot_image(self, args):
+        """Implements 'generate_vendor_boot_image' sub-command"""
+        self.image_gen.generate_vendor_boot_image(args.tool_version,
+                                                  args.vendor_bundle,
+                                                  args.dtb,
+                                                  args.vendor_ramdisk,
+                                                  args.output)
 
     def generate_vbmeta_image(self, args):
         """Implements 'generate_vbmeta_image' sub-command"""
