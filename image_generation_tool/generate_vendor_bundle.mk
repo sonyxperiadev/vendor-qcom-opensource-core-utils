@@ -2,7 +2,7 @@
 # image_generation_tool to generate boot and vbmeta images.
 
 IMAGE_GEN_TOOL := out/host/linux-x86/bin/image_generation_tool
-IMAGE_GEN_TOOL_VERSION := 1.0
+IMAGE_GEN_TOOL_VERSION := 1.1
 
 VENDOR_BUNDLE_DEPS := \
   $(PRODUCT_OUT)/vendor.img \
@@ -13,7 +13,8 @@ VENDOR_BUNDLE_DEPS := \
 generate_vendor_bundle: $(VENDOR_BUNDLE_DEPS)
 	python $(IMAGE_GEN_TOOL) generate_vendor_bundle --tool_version $(IMAGE_GEN_TOOL_VERSION)
 
-# TODO: Switch to TARGET_BOARD_PLATFORM when taro goes live
-ifeq ($(filter $(TARGET_PRODUCT), taro),$(TARGET_PRODUCT))
+ifeq ($(TARGET_USES_IMAGE_GEN_TOOL),true)
+ifeq ($(BOARD_AVB_ENABLE),true)
 droidcore:generate_vendor_bundle
+endif
 endif

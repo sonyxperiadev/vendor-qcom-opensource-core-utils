@@ -55,7 +55,9 @@ endif
 # set the dependencies on prebuilt_dtbo.img based on definition of
 # BOARD_PREBUILT_DTBOIMAGE
 ifneq ($(strip $(BOARD_KERNEL_SEPARATED_DTBO)),)
+ifndef BOARD_PREBUILT_DTBOIMAGE
 BOARD_PREBUILT_DTBOIMAGE := $(PRODUCT_OUT)/prebuilt_dtbo.img
+endif
 endif
 
 LIBION_HEADER_PATH_WRAPPER := $(LOCAL_PATH)/libion_header_paths/libion_path.mk
