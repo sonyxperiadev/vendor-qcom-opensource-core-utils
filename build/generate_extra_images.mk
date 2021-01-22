@@ -98,10 +98,10 @@ MKDTIMG := $(HOST_OUT_EXECUTABLES)/mkdtimg$(HOST_EXECUTABLE_SUFFIX)
 INSTALLED_DTBOIMAGE_TARGET := $(PRODUCT_OUT)/dtbo.img
 
 # Most specific paths must come first in possible_dtbo_dirs
-possible_dtbo_dirs = $(KERNEL_OUT)/arch/$(TARGET_KERNEL_ARCH)/boot/dts $(KERNEL_OUT)/arch/arm/boot/dts
+possible_dtbo_dirs := $(KERNEL_OUT)/arch/$(TARGET_KERNEL_ARCH)/boot/dts $(KERNEL_OUT)/arch/arm/boot/dts
 $(shell mkdir -p $(possible_dtbo_dirs))
-dtbo_dir = $(firstword $(wildcard $(possible_dtbo_dirs)))
-dtbo_objs = $(shell find $(dtbo_dir) -name \*.dtbo)
+dtbo_dir := $(firstword $(wildcard $(possible_dtbo_dirs)))
+dtbo_objs := $(shell find $(dtbo_dir) -name \*.dtbo)
 
 define build-dtboimage-target
     $(call pretty,"Target dtbo image: $(INSTALLED_DTBOIMAGE_TARGET)")
@@ -137,8 +137,8 @@ DTBTOOL := $(HOST_OUT_EXECUTABLES)/dtbTool$(HOST_EXECUTABLE_SUFFIX)
 INSTALLED_DTIMAGE_TARGET := $(PRODUCT_OUT)/dt.img
 
 # Most specific paths must come first in possible_dtb_dirs
-possible_dtb_dirs = $(KERNEL_OUT)/arch/$(TARGET_KERNEL_ARCH)/boot/dts/qcom/ $(KERNEL_OUT)/arch/arm/boot/dts/qcom/ $(KERNEL_OUT)/arch/$(TARGET_KERNEL_ARCH)/boot/dts/ $(KERNEL_OUT)/arch/arm/boot/dts/ $(KERNEL_OUT)/arch/arm/boot/
-dtb_dir = $(firstword $(wildcard $(possible_dtb_dirs)))
+possible_dtb_dirs := $(KERNEL_OUT)/arch/$(TARGET_KERNEL_ARCH)/boot/dts/qcom/ $(KERNEL_OUT)/arch/arm/boot/dts/qcom/ $(KERNEL_OUT)/arch/$(TARGET_KERNEL_ARCH)/boot/dts/ $(KERNEL_OUT)/arch/arm/boot/dts/ $(KERNEL_OUT)/arch/arm/boot/
+dtb_dir := $(firstword $(wildcard $(possible_dtb_dirs)))
 
 define build-dtimage-target
     $(call pretty,"Target dt image: $(INSTALLED_DTIMAGE_TARGET)")
