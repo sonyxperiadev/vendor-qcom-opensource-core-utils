@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+<!-- Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -67,6 +67,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <version>1.0</version>
         <interface>
              <name>IDisplayPostproc</name>
+             <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.display.demura</name>
+        <version>1.0</version>
+        <interface>
+             <name>IDemuraFileFinder</name>
              <instance>default</instance>
         </interface>
     </hal>
@@ -146,7 +154,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    </hal>
    <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.bluetooth_audio</name>
-        <version>2.0</version>
+        <version>2.0-1</version>
         <interface>
             <name>IBluetoothAudioProvidersFactory</name>
             <instance>default</instance>
@@ -164,6 +172,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
        <name>com.qualcomm.qti.uceservice</name>
        <version>2.0-1</version>
        <version>2.2</version>
+       <version>2.3</version>
        <interface>
          <name>IUceService</name>
          <instance>com.qualcomm.qti.uceservice</instance>
@@ -328,7 +337,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    </hal>
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.radio.ims</name>
-           <version>1.0-6</version>
+           <version>1.0-7</version>
            <interface>
                <name>IImsRadio</name>
                <instance>imsradio0</instance>
@@ -553,7 +562,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <hal format="hidl" optional="true">
         <name>vendor.qti.data.factory</name>
         <version>1.0</version>
-        <version>2.0-1</version>
+        <version>2.0-2</version>
         <interface>
             <name>IFactory</name>
             <instance>default</instance>
@@ -776,7 +785,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <!-- Trusted UI HAL Service -->
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.trustedui</name>
-        <version>1.0-1</version>
+        <version>1.0-2</version>
         <interface>
             <name>ITrustedUI</name>
             <instance>default</instance>
@@ -879,6 +888,16 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <instance>SlmAdapter</instance>
         </interface>
     </hal>
+    <!-- MwqemAdapter HAL service -->
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.mwqemadapter</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IMwqemAdapter</name>
+            <instance>MwqemAdapter</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
        <name>vendor.qti.hardware.qccsyshal</name>
        <transport>hwbinder</transport>
@@ -897,7 +916,26 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
            <instance>default</instance>
        </interface>
     </hal>
-
+    <!-- Audio Graph Manager service -->
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.AGMIPC</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IAGM</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <!-- Audio Platform adatation service -->
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.hardware.pal</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IPAL</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
        <name>vendor.qti.hardware.wifi.wifimyftm</name>
        <transport>hwbinder</transport>

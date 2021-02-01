@@ -2,7 +2,7 @@ DISABLE_THIS_DLKM := $(strip $(TARGET_KERNEL_DLKM_DISABLE))
 
 ifeq ($(DISABLE_THIS_DLKM),true)
 ifneq (,$(filter $(LOCAL_MODULE),$(TARGET_KERNEL_DLKM_OVERRIDE)))
-    DISABLE_THIS_DLKM = false
+    DISABLE_THIS_DLKM := false
 else
 endif
 endif
