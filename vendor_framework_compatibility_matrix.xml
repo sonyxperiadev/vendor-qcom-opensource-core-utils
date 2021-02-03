@@ -73,6 +73,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.display.demura</name>
         <version>1.0</version>
+        <version>2.0</version>
         <interface>
              <name>IDemuraFileFinder</name>
              <instance>default</instance>
