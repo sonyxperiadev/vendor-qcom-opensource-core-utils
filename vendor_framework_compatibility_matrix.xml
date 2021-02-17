@@ -337,7 +337,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    </hal>
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.radio.ims</name>
-           <version>1.0-7</version>
+           <version>1.0-8</version>
            <interface>
                <name>IImsRadio</name>
                <instance>imsradio0</instance>
@@ -373,7 +373,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.radio.qtiradio</name>
         <version>1.0</version>
-        <version>2.0-5</version>
+        <version>2.0-6</version>
         <interface>
             <name>IQtiRadio</name>
             <instance>slot1</instance>
@@ -945,5 +945,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
            <instance>default</instance>
        </interface>
     </hal>
-
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.hardware.display.config</name>
+        <interface>
+            <name>IDisplayConfig</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
 </compatibility-matrix>
