@@ -76,6 +76,11 @@
 #     options: Comma(',') seperated tech_packages name and give :golden at the end if we want to generate
 #     Golden abi-dumps.
 #     Note: By default it will run in checking mode.
+# Version 6:
+#     Supports uploading build data for analysis. It is enabled by default.
+#     Use options: --dca_disable To disable collecting build data.
+#     Usage: ./build.sh dist -j32 --dca_disable
+#
 BUILD_SH_VERSION=5
 if [ "$1" == "--version" ]; then
     return $BUILD_SH_VERSION
@@ -116,6 +121,10 @@ TARGET_ONLY=0
 FULL_BUILD=0
 LIST_TECH_PACKAGE=""
 
+# set below flag to 0 to disable build performance data collection.
+DCA_ENABLED=1
+DCA_OUT="out/dca"
+
 while [[ $# -gt 0 ]]
     do
     arg="$1"
@@ -130,6 +139,10 @@ while [[ $# -gt 0 ]]
             ;;
         *target_only)
             TARGET_ONLY=1
+            shift
+            ;;
+        *dca_disable)
+            DCA_ENABLED=0
             shift
             ;;
         --tech_package*)
@@ -482,6 +495,14 @@ function full_build () {
     merge_only
 }
 
+function run_dca() {
+    # Run the command in background and collect build data.
+    DCA_SCRIPT="$QCPATH/common-noship/scripts/analytics_data_collection.sh"
+    if [[ -f $DCA_SCRIPT ]]; then
+        bash $DCA_SCRIPT > $DCA_OUT/dca.log 2>&1 &
+    fi
+}
+
 # Check if qssi is supported on this target or not.
 for QSSI_TARGET in "${QSSI_TARGETS_LIST[@]}"
 do
@@ -525,5 +546,10 @@ else # For QSSI targets
     if [[ "$MERGE_ONLY" -eq 1 ]]; then
         log "Executing a merge only operation ..."
         merge_only
+    fi
+    if [[ ${DCA_ENABLED} -eq 1 ]]; then
+        log "Capturing build performance data..."
+        mkdir -p $DCA_OUT
+        run_dca
     fi
 fi
