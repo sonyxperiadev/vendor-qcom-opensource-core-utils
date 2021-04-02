@@ -443,6 +443,10 @@ function build_qssi_only () {
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
     command "lunch ${TARGET_QSSI}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
+    COMMONSYS_INTF_SCRIPT="$QTI_BUILDTOOLS_DIR/build/commonsys_intf_checker.py"
+    if [ -f $COMMONSYS_INTF_SCRIPT ];then
+      command "python $COMMONSYS_INTF_SCRIPT"
+    fi
 }
 
 function build_target_only () {
