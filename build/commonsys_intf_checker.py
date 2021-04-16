@@ -39,6 +39,7 @@ violated_modules = []
 git_repository_list = []
 qssi_install_keywords = ["system","system_ext","product"]
 vendor_install_keywords = ["vendor"]
+violation_file_path = out_path
 
 
 def parse_xml_file(path):
@@ -95,7 +96,7 @@ def find_and_update_git_project_path(path):
 
 def print_violations_to_file(violation_list,qssi_path_project_list,vendor_path_project_list):
     ## Open file to write Violation list
-    violation_file_handler = open(out_path + "/commonsys-intf-violator.txt", "w")
+    violation_file_handler = open(violation_file_path + "/commonsys-intf-violator.txt", "w")
     violation_file_handler.write("############ Violation List ###########\n\n")
     for violator in violation_list :
         qssi_module_list =  qssi_path_project_list[violator]
@@ -164,6 +165,9 @@ def find_commonsys_intf_project_paths():
 def start_commonsys_intf_checker():
     global module_info_dict
     global git_repository_list
+    global violation_file_path
+    if os.path.exists(violation_file_path + "/configs"):
+        violation_file_path = violation_file_path + "/configs"
     module_info_dict = load_json_file(out_path + "/module-info.json")
     manifest_root = parse_xml_file(croot + "/.repo/manifest.xml")
     for project in manifest_root.findall("project"):
