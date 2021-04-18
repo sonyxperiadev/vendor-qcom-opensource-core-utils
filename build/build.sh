@@ -76,6 +76,11 @@
 #     options: Comma(',') seperated tech_packages name and give :golden at the end if we want to generate
 #     Golden abi-dumps.
 #     Note: By default it will run in checking mode.
+# Version 6:
+#     Supports uploading build data for analysis. It is enabled by default.
+#     Use options: --dca_disable To disable collecting build data.
+#     Usage: ./build.sh dist -j32 --dca_disable
+#
 BUILD_SH_VERSION=5
 if [ "$1" == "--version" ]; then
     return $BUILD_SH_VERSION
@@ -116,6 +121,10 @@ TARGET_ONLY=0
 FULL_BUILD=0
 LIST_TECH_PACKAGE=""
 
+# set below flag to 0 to disable build performance data collection.
+DCA_ENABLED=1
+DCA_OUT="out/dca"
+
 while [[ $# -gt 0 ]]
     do
     arg="$1"
@@ -130,6 +139,10 @@ while [[ $# -gt 0 ]]
             ;;
         *target_only)
             TARGET_ONLY=1
+            shift
+            ;;
+        *dca_disable)
+            DCA_ENABLED=0
             shift
             ;;
         --tech_package*)
@@ -164,7 +177,7 @@ if [[ "$TARGET_PRODUCT" == "qssi" ]]; then
     QSSI_ONLY=1
 fi
 
-QSSI_TARGETS_LIST=("holi" "taro" "lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "qssi" "qssi_32" "qssi_32go" "bengal_32" "bengal_32go")
+QSSI_TARGETS_LIST=("holi" "taro" "kalama" "lahaina" "sdm710" "sdm845" "msmnile" "sm6150" "kona" "atoll" "trinket" "lito" "bengal" "qssi" "qssi_32" "qssi_32go" "bengal_32" "bengal_32go")
 QSSI_TARGET_FLAG=0
 SKIP_ABI_CHECKS=true
 
@@ -222,9 +235,9 @@ QSSI_ARGS_WITHOUT_DIST=""
 DIST_DIR="out/dist"
 MERGED_TARGET_FILES="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-target_files.zip"
 MERGED_OTA_ZIP="$DIST_DIR/merged-qssi_${TARGET_PRODUCT}-ota.zip"
-DIST_ENABLED_TARGET_LIST=("holi" "taro" "lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll" "qssi" "qssi_32" "qssi_32go" "bengal_32" "bengal_32go")
-VIRTUAL_AB_ENABLED_TARGET_LIST=("kona" "lito" "taro" "lahaina")
-DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("holi" "taro" "lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi" "qssi_32" "qssi_32go" "bengal" "bengal_32" "bengal_32go" "sm6150")
+DIST_ENABLED_TARGET_LIST=("holi" "taro" "kalama" "lahaina" "kona" "sdm710" "sdm845" "msmnile" "sm6150" "trinket" "lito" "bengal" "atoll" "qssi" "qssi_32" "qssi_32go" "bengal_32" "bengal_32go")
+VIRTUAL_AB_ENABLED_TARGET_LIST=("kona" "lito" "taro" "kalama" "lahaina")
+DYNAMIC_PARTITION_ENABLED_TARGET_LIST=("holi" "taro" "kalama" "lahaina" "kona" "msmnile" "sdm710" "lito" "trinket" "atoll" "qssi" "qssi_32" "qssi_32go" "bengal" "bengal_32" "bengal_32go" "sm6150")
 DYNAMIC_PARTITIONS_IMAGES_PATH=$OUT
 DP_IMAGES_OVERRIDE=false
 
@@ -443,6 +456,10 @@ function build_qssi_only () {
     command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
     command "lunch ${TARGET_QSSI}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
+    COMMONSYS_INTF_SCRIPT="$QTI_BUILDTOOLS_DIR/build/commonsys_intf_checker.py"
+    if [ -f $COMMONSYS_INTF_SCRIPT ];then
+      command "python $COMMONSYS_INTF_SCRIPT"
+    fi
 }
 
 function build_target_only () {
@@ -480,6 +497,14 @@ function full_build () {
         command "cp $QSSI_OUT/system_ext.img $OUT/"
     fi
     merge_only
+}
+
+function run_dca() {
+    # Run the command in background and collect build data.
+    DCA_SCRIPT="$QCPATH/common-noship/scripts/analytics_data_collection.sh"
+    if [[ -f $DCA_SCRIPT ]]; then
+        bash $DCA_SCRIPT > $DCA_OUT/dca.log 2>&1 &
+    fi
 }
 
 # Check if qssi is supported on this target or not.
@@ -525,5 +550,10 @@ else # For QSSI targets
     if [[ "$MERGE_ONLY" -eq 1 ]]; then
         log "Executing a merge only operation ..."
         merge_only
+    fi
+    if [[ ${DCA_ENABLED} -eq 1 ]]; then
+        log "Capturing build performance data..."
+        mkdir -p $DCA_OUT
+        run_dca
     fi
 fi

@@ -344,6 +344,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                <instance>imsradio1</instance>
            </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.hardware.radio.ims</name>
+        <interface>
+            <name>IImsRadio</name>
+            <instance>imsradio0</instance>
+            <instance>imsradio1</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.radio.internal.deviceinfo</name>
         <version>1.0</version>
@@ -532,6 +540,13 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <interface>
             <name>ILocHidlGnss</name>
             <instance>gnss_vendor</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.gnss</name>
+        <interface>
+            <name>ILocAidlGnss</name>
+            <instance>default</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
@@ -918,13 +933,13 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         </interface>
     </hal>
     <hal format="hidl" optional="true">
-       <name>vendor.qti.hardware.qccsyshal</name>
-       <transport>hwbinder</transport>
-       <version>1.0</version>
-       <interface>
-           <name>IQccsyshal</name>
-           <instance>qccsyshal</instance>
-       </interface>
+        <name>vendor.qti.hardware.qccsyshal</name>
+        <transport>hwbinder</transport>
+        <version>1.0-1</version>
+        <interface>
+            <name>IQccsyshal</name>
+            <instance>qccsyshal</instance>
+        </interface>
     </hal>
     <hal format="hidl" optional="true">
        <name>vendor.qti.hardware.limits</name>
@@ -968,6 +983,15 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <name>vendor.qti.hardware.display.config</name>
         <interface>
             <name>IDisplayConfig</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl" optional="true">
+        <name>vendor.qti.qesdhal</name>
+        <transport>hwbinder</transport>
+        <version>1.0-1</version>
+        <interface>
+            <name>IQesdhal</name>
             <instance>default</instance>
         </interface>
     </hal>

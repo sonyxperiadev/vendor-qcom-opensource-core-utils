@@ -61,3 +61,17 @@ endif
 endif
 
 LIBION_HEADER_PATH_WRAPPER := $(LOCAL_PATH)/libion_header_paths/libion_path.mk
+
+# Dump the status of various feature enforcements into a single file.
+FEATURE_ENFORCEMENT_STATUS := $(PRODUCT_OUT)/configs/enforcement_status.txt
+$(FEATURE_ENFORCEMENT_STATUS):
+	rm -rf $@
+	@echo "Creating $@"
+	mkdir -p $(dir $@)
+ifeq ($(BUILD_BROKEN_PREBUILT_ELF_FILES),true)
+	echo "PREBUILT_ELF_FILES_DEPENDENCY_ENFORCED=false" >> $@
+else
+	echo "PREBUILT_ELF_FILES_DEPENDENCY_ENFORCED=true" >> $@
+endif
+ALL_DEFAULT_INSTALLED_MODULES += $(FEATURE_ENFORCEMENT_STATUS)
+
