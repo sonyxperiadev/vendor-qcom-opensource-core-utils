@@ -453,7 +453,7 @@ function run_qiifa () {
 
 function build_qssi_only () {
     command "source build/envsetup.sh"
-    command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
+    command "$QTI_BUILDTOOLS_DIR/build/makefile-violation-scanner.sh"
     command "lunch ${TARGET_QSSI}-${TARGET_BUILD_VARIANT}"
     command "make $QSSI_ARGS"
     COMMONSYS_INTF_SCRIPT="$QTI_BUILDTOOLS_DIR/build/commonsys_intf_checker.py"
@@ -464,7 +464,7 @@ function build_qssi_only () {
 
 function build_target_only () {
     command "source build/envsetup.sh"
-    command "$QTI_BUILDTOOLS_DIR/build/kheaders-dep-scanner.sh"
+    command "$QTI_BUILDTOOLS_DIR/build/makefile-violation-scanner.sh"
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
     QSSI_ARGS="$QSSI_ARGS SKIP_ABI_CHECKS=$SKIP_ABI_CHECKS"
     if [ -n "$LIST_TECH_PACKAGE" ]; then
