@@ -1030,4 +1030,39 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <instance>sxrhalservice</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.hardware.qxr</name>
+        <interface>
+            <name>IQXRCoreService</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.hardware.qxr</name>
+        <interface>
+            <name>IQXRCamService</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.hardware.qxr</name>
+        <interface>
+            <name>IQXRSplitService</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.hardware.qxr</name>
+        <interface>
+            <name>IQXRModService</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>vendor.qti.hardware.qxr</name>
+        <interface>
+            <name>IQXRAudioService</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
 </compatibility-matrix>
