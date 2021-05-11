@@ -416,7 +416,7 @@ function generate_ota_zip () {
         --framework-misc-info-keys $DIST_DIR/merge_config_system_misc_info_keys \
         --framework-item-list $DIST_DIR/merge_config_system_item_list \
         --vendor-item-list $DIST_DIR/merge_config_other_item_list \
-        --output-ota  $MERGED_OTA_ZIP"
+        --output-ota  $MERGED_OTA_ZIP --allow-duplicate-apkapex-keys"
 
     if [ "$ENABLE_AB" = false ]; then
         MERGE_TARGET_FILES_COMMAND="$MERGE_TARGET_FILES_COMMAND --rebuild_recovery"
