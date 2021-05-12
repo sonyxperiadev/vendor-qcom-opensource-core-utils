@@ -63,6 +63,7 @@ endif
 LIBION_HEADER_PATH_WRAPPER := $(LOCAL_PATH)/libion_header_paths/libion_path.mk
 
 # Dump the status of various feature enforcements into a single file.
+include $(LOCAL_PATH)/makefile_violation_config.mk
 FEATURE_ENFORCEMENT_STATUS := $(PRODUCT_OUT)/configs/enforcement_status.txt
 $(FEATURE_ENFORCEMENT_STATUS):
 	rm -rf $@
@@ -73,6 +74,30 @@ ifeq ($(BUILD_BROKEN_PREBUILT_ELF_FILES),true)
 else
 	echo "PREBUILT_ELF_FILES_DEPENDENCY_ENFORCED=true" >> $@
 endif
+ifeq ($(BUILD_BROKEN_USES_BUILD_COPY_HEADERS),true)
+	echo "BUILD_COPY_HEADERS_ENFORCED=false" >> $@
+else
+	echo "BUILD_COPY_HEADERS_ENFORCED=true" >> $@
+endif
+ifeq ($(BUILD_BROKEN_USES_SHELL),true)
+	echo "SHELL_USAGE_ENFORCED=false" >> $@
+else
+	echo "SHELL_USAGE_ENFORCED=true" >> $@
+endif
+ifeq ($(BUILD_BROKEN_USES_RECURSIVE_VARS),true)
+	echo "RECURSIVE_VAR_USAGE_ENFORCED=false" >> $@
+else
+	echo "RECURSIVE_VAR_USAGE_ENFORCED=true" >> $@
+endif
+ifeq ($(BUILD_BROKEN_USES_RM_OUT),true)
+	echo "RM_OUT_ENFORCED=false" >> $@
+else
+	echo "RM_OUT_ENFORCED=true" >> $@
+endif
+ifeq ($(BUILD_BROKEN_USES_DATETIME),true)
+	echo "DATETIME_USAGE_ENFORCED=false" >> $@
+else
+	echo "DATETIME_USAGE_ENFORCED=true" >> $@
+endif
 ALL_DEFAULT_INSTALLED_MODULES += $(FEATURE_ENFORCEMENT_STATUS)
 droidcore: $(FEATURE_ENFORCEMENT_STATUS)
-
