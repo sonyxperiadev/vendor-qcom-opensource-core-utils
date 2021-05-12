@@ -37,17 +37,18 @@ out_path = os.getenv("OUT")
 croot = os.getenv("ANDROID_BUILD_TOP")
 violated_modules = []
 git_repository_list = []
+whitelist_projects_list = []
 qssi_install_keywords = ["system","system_ext","product"]
 vendor_install_keywords = ["vendor"]
 violation_file_path = out_path
-
+aidl_metadata_file = croot + "/out/soong/.intermediates/system/tools/aidl/build/aidl_metadata_json/aidl_metadata.json"
+aidl_metadata_dict = {}
 
 def parse_xml_file(path):
     xml_element = None
     if os.path.isfile(path):
         try:
             xml_element = et.parse(path).getroot()
-            print(xml_element)
         except Exception as e:
             print("Exiting!! Xml Parsing Failed : " + path)
             sys.exit(1)
@@ -98,18 +99,42 @@ def print_violations_to_file(violation_list,qssi_path_project_list,vendor_path_p
     ## Open file to write Violation list
     violation_file_handler = open(violation_file_path + "/commonsys-intf-violator.txt", "w")
     violation_file_handler.write("############ Violation List ###########\n\n")
-    for violator in violation_list :
+    for violator in violation_list:
+        if ignore_whitelist_projects(violator):
+            continue
         qssi_module_list =  qssi_path_project_list[violator]
         vendor_module_list = vendor_path_project_list[violator]
-        violation_file_handler.writelines("Git Project : " + violator+"\n")
+        violation_file_handler.writelines("Git Project : " + str(violator)+"\n")
         violation_file_handler.writelines("QSSI Violations \n")
         for qssi_module in qssi_module_list:
-            violation_file_handler.writelines(qssi_module + ",")
+            violation_file_handler.writelines(str(qssi_module) + ",")
         violation_file_handler.writelines("\nVendor Violations \n")
         for vendor_module in vendor_module_list:
-            violation_file_handler.writelines(vendor_module  + ",")
+            violation_file_handler.writelines(str(vendor_module)  + ",")
         violation_file_handler.writelines("\n################################################# \n\n")
     violation_file_handler.close()
+
+def check_for_hidl_aidl_intermediate_libs(module_name,class_type):
+    if "@" in module_name or "-ndk" in module_name:
+        if class_type == "EXECUTABLES" or "-impl" in module_name:
+            return False
+        else:
+            return True
+    else:
+        ## Refer aidl_metadata database
+        for aidl_info in aidl_metadata_dict:
+            if not aidl_info is None:
+                aidl_module_name = aidl_info["name"]
+                if aidl_module_name in module_name :
+                    if class_type == "JAVA_LIBRARIES" or class_type == "SHARED_LIBRARIES":
+                        return True
+        return False
+
+def ignore_whitelist_projects(project_name):
+    for project in whitelist_projects_list :
+        if project == project_name:
+            return True
+    return False
 
 def find_commonsys_intf_project_paths():
     qssi_install_keywords = ["system","system_ext","product"]
@@ -122,7 +147,11 @@ def find_commonsys_intf_project_paths():
         try:
             install_path = module_info_dict[module]['installed'][0]
             project_path = module_info_dict[module]['path'][0]
+            class_type   = module_info_dict[module]['class'][0]
         except IndexError:
+            continue
+
+        if project_path is None or install_path is None or class_type is None:
             continue
 
         relative_out_path = out_path.split(croot + "/")[1]
@@ -131,8 +160,8 @@ def find_commonsys_intf_project_paths():
             continue
         ## We are interested in only source paths which are
         ## starting with vendor for now.
-
-        if project_path.startswith(path_keyword) and "@" not in module and "-ndk" not in module:
+        aidl_hidl_lib = check_for_hidl_aidl_intermediate_libs(module,class_type)
+        if project_path.startswith(path_keyword) and not aidl_hidl_lib:
             qssi_or_vendor = check_if_module_contributing_to_qssi_or_vendor(install_path)
             if not qssi_or_vendor["qssi_path"] and not qssi_or_vendor["vendor_path"]:
                 continue
@@ -166,10 +195,15 @@ def start_commonsys_intf_checker():
     global module_info_dict
     global git_repository_list
     global violation_file_path
+    global whitelist_projects_list
+    global aidl_metadata_dict
+    script_dir = os.path.dirname(os.path.realpath(__file__))
     if os.path.exists(violation_file_path + "/configs"):
         violation_file_path = violation_file_path + "/configs"
     module_info_dict = load_json_file(out_path + "/module-info.json")
+    whitelist_projects_list = load_json_file(script_dir + "/whitelist_commonsys_intf_project.json")
     manifest_root = parse_xml_file(croot + "/.repo/manifest.xml")
+    aidl_metadata_dict = load_json_file(aidl_metadata_file)
     for project in manifest_root.findall("project"):
         git_project_path = project.attrib.get('path')
         if not git_project_path == None:
@@ -178,6 +212,7 @@ def start_commonsys_intf_checker():
 
 def main():
     start_commonsys_intf_checker()
+    print("Commonsys-Intf Script Executed Successfully!!")
 
 if __name__ == '__main__':
     main()
