@@ -69,6 +69,15 @@ $(FEATURE_ENFORCEMENT_STATUS):
 	rm -rf $@
 	@echo "Creating $@"
 	mkdir -p $(dir $@)
+
+ifeq ($(CLEAN_UP_JAVA_IN_VENDOR),enforcing)
+	echo "DISALLOW_JAVA_SRC_COMPILE_IN_VENDOR=enforcing" >> $@
+else ifeq ($(CLEAN_UP_JAVA_IN_VENDOR),warning)
+	echo "DISALLOW_JAVA_SRC_COMPILE_IN_VENDOR=warning" >> $@
+else
+	echo "DISALLOW_JAVA_SRC_COMPILE_IN_VENDOR=disabled" >> $@
+endif
+
 ifeq ($(BUILD_BROKEN_PREBUILT_ELF_FILES),true)
 	echo "PREBUILT_ELF_FILES_DEPENDENCY_ENFORCED=false" >> $@
 else
