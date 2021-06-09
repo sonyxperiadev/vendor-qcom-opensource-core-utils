@@ -194,13 +194,6 @@ case "$TARGET_PRODUCT" in
         ;;
 esac
 
-
-# Export BUILD_DATETIME so that both Qssi and target images get the same timestamp
-DATE=`which date`
-DATE=${DATE:-date}
-EPOCH_TIME=`${DATE} +%s`
-export BUILD_DATETIME="$EPOCH_TIME"
-
 NON_AB_TARGET_LIST=("qssi_32go" "bengal_32go")
 for NON_AB_TARGET in "${NON_AB_TARGET_LIST[@]}"
 do
