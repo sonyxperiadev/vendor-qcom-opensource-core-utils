@@ -6,4 +6,5 @@ vendor_prop_context_restriction_enforcement:
 
 ifneq ($(TARGET_PRODUCT), qssi)
 droidcore:vendor_prop_context_restriction_enforcement
+droidcore-unbundled:vendor_prop_context_restriction_enforcement
 endif

@@ -18,5 +18,6 @@ generate_vendor_bundle: $(VENDOR_BUNDLE_DEPS)
 ifeq ($(TARGET_USES_IMAGE_GEN_TOOL),true)
 ifeq ($(BOARD_AVB_ENABLE),true)
 droidcore:generate_vendor_bundle
+droidcore-unbundled:generate_vendor_bundle
 endif
 endif
