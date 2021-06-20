@@ -42,6 +42,7 @@ qssi_install_keywords = ["system","system_ext","product"]
 vendor_install_keywords = ["vendor"]
 violation_file_path = out_path
 aidl_metadata_file = croot + "/out/soong/.intermediates/system/tools/aidl/build/aidl_metadata_json/aidl_metadata.json"
+noship_project_marker = os.path.join(croot,os.getenv("QCPATH"),"interfaces-noship")
 aidl_metadata_dict = {}
 
 def parse_xml_file(path):
@@ -95,24 +96,35 @@ def find_and_update_git_project_path(path):
          else:
              return path
 
-def print_violations_to_file(violation_list,qssi_path_project_list,vendor_path_project_list):
-    ## Open file to write Violation list
-    violation_file_handler = open(violation_file_path + "/commonsys-intf-violator.txt", "w")
-    violation_file_handler.write("############ Violation List ###########\n\n")
+def filter_whitelist_projects(violation_list):
+    filtered_project_violation_list = []
     for violator in violation_list:
-        if ignore_whitelist_projects(violator):
-            continue
-        qssi_module_list =  qssi_path_project_list[violator]
-        vendor_module_list = vendor_path_project_list[violator]
-        violation_file_handler.writelines("Git Project : " + str(violator)+"\n")
-        violation_file_handler.writelines("QSSI Violations \n")
-        for qssi_module in qssi_module_list:
-            violation_file_handler.writelines(str(qssi_module) + ",")
-        violation_file_handler.writelines("\nVendor Violations \n")
-        for vendor_module in vendor_module_list:
-            violation_file_handler.writelines(str(vendor_module)  + ",")
-        violation_file_handler.writelines("\n################################################# \n\n")
-    violation_file_handler.close()
+        if not ignore_whitelist_projects(violator):
+            filtered_project_violation_list.append(violator)
+    return filtered_project_violation_list
+
+def print_violations_to_file(violation_list,qssi_path_project_list,vendor_path_project_list):
+    violation_list = filter_whitelist_projects(violation_list)
+    if violation_list:
+        ## Open file to write Violation list
+        violation_file_handler = open(violation_file_path + "/commonsys-intf-violator.txt", "w")
+        violation_file_handler.write("############ Violation List ###########\n\n")
+        for violator in violation_list:
+            qssi_module_list =  qssi_path_project_list[violator]
+            vendor_module_list = vendor_path_project_list[violator]
+            violation_file_handler.writelines("Git Project : " + str(violator)+"\n")
+            violation_file_handler.writelines("QSSI Violations \n")
+            for qssi_module in qssi_module_list:
+                violation_file_handler.writelines(str(qssi_module) + ",")
+            violation_file_handler.writelines("\nVendor Violations \n")
+            for vendor_module in vendor_module_list:
+                violation_file_handler.writelines(str(vendor_module)  + ",")
+            violation_file_handler.writelines("\n################################################# \n\n")
+        violation_file_handler.close()
+        if commonsys_intf_enforcement:
+            print("Commonsys-Intf Violation found !! Exiting Compilation !!")
+            print("For details execute : cat $OUT/configs/commonsys-intf-violator.txt")
+            sys.exit(-1)
 
 def check_for_hidl_aidl_intermediate_libs(module_name,class_type):
     if "@" in module_name or "-ndk" in module_name:
@@ -210,9 +222,36 @@ def start_commonsys_intf_checker():
             git_repository_list.append(git_project_path)
     find_commonsys_intf_project_paths()
 
+def read_enforcement_value_from_mkfile():
+    global commonsys_intf_enforcement
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    configs_enforcement_mk_path = os.path.join(script_dir,"configs_enforcement.mk")
+    if os.path.exists(configs_enforcement_mk_path):
+        configs_enforcement = open(configs_enforcement_mk_path,"r")
+        mkfile_lines = configs_enforcement.readlines()
+        for line in mkfile_lines:
+            enforcement_flag = (line.split(":=")[0]).strip()
+            enforcement_value = (line.split(":=")[1]).strip()
+            if enforcement_flag == "PRODUCT_ENFORCE_COMMONSYSINTF_CHECKER":
+                if enforcement_value == "true":
+                    commonsys_intf_enforcement = True
+                elif enforcement_value == "false":
+                    commonsys_intf_enforcement = False
+                else:
+                    print("Unrecongnized Enforcement flag option : " + str(enforcement_value))
+                    sys.exit(-1)
+                break
+    else:
+        print("configs_enforcement.mk fime missing. Exiting!!")
+        sys.exit(-1)
+
 def main():
-    start_commonsys_intf_checker()
-    print("Commonsys-Intf Script Executed Successfully!!")
+    if os.path.exists(noship_project_marker):
+        read_enforcement_value_from_mkfile()
+        start_commonsys_intf_checker()
+        print("Commonsys-Intf Script Executed Successfully!!")
+    else:
+        print("Skipping Commonsys-Intf Checker!!")
 
 if __name__ == '__main__':
     main()
