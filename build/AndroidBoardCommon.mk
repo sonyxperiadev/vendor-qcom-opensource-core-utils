@@ -109,6 +109,11 @@ ifeq ($(BUILD_BROKEN_USES_DATETIME),true)
 else
 	echo "DATETIME_USAGE_ENFORCED=true" >> $@
 endif
+ifeq ($(BUILD_BROKEN_USES_TARGET_PRODUCT),true)
+	echo "TARGET_PRODUCT_USAGE_ENFORCED=false" >> $@
+else
+	echo "TARGET_PRODUCT_USAGE_ENFORCED=true" >> $@
+endif
 ifeq ($(PRODUCT_SET_DEBUGFS_RESTRICTIONS),true)
 	echo "PRODUCT_SET_DEBUGFS_RESTRICTIONS=true" >> $@
 else
