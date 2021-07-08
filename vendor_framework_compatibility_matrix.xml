@@ -56,7 +56,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     </hal>
     <hal format="hidl" optional="true">
         <name>vendor.display.color</name>
-        <version>1.0-5</version>
+        <version>1.0-6</version>
         <interface>
              <name>IDisplayColor</name>
              <instance>default</instance>
@@ -336,6 +336,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
            <instance>slot2</instance>
        </interface>
    </hal>
+   <hal format="aidl" optional="true">
+       <name>vendor.qti.hardware.radio.am</name>
+       <interface>
+           <name>IQcRilAudio</name>
+           <instance>slot1</instance>
+           <instance>slot2</instance>
+       </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>vendor.qti.hardware.radio.ims</name>
            <version>1.0-8</version>
@@ -685,7 +693,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    </hal>
    <hal format="hidl" optional="true">
        <name>vendor.qti.hardware.data.iwlan</name>
-       <version>1.0</version>
+       <version>1.0-1</version>
        <interface>
            <name>IIWlan</name>
            <instance>slot1</instance>
