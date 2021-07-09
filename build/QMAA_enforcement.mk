@@ -8,4 +8,5 @@ qmaa_enforcement:
 
 ifeq ($(TARGET_USES_QMAA),true)
 droidcore:qmaa_enforcement
+droidcore-unbundled:qmaa_enforcement
 endif
