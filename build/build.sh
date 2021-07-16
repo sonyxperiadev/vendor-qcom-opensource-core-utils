@@ -419,7 +419,14 @@ function generate_ota_zip () {
 }
 
 function run_qiifa_initialization() {
-    QIIFA_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_techpackage_initialization.py"
+    QIIFA_IN_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_initialization.py"
+    QIIFA_TP_SCRIPT="$QCPATH/commonsys-intf/QIIFA-fwk/qiifa_techpackage_initialization.py"
+    QIIFA_SCRIPT = ""
+    if [[ -f $QIIFA_IN_SCRIPT ]];then
+     QIIFA_SCRIPT=$QIIFA_IN_SCRIPT
+    elif [[ -f $QIIFA_TP_SCRIPT ]];then
+      QIIFA_SCRIPT=$QIIFA_TP_SCRIPT
+    fi
     IFS=':' read -ra ADDR <<< "${LIST_TECH_PACKAGE:15}"
     if [[ -f $QIIFA_SCRIPT ]]; then
      command "python $QIIFA_SCRIPT ${ADDR[0]}"
@@ -460,9 +467,7 @@ function build_target_only () {
     command "$QTI_BUILDTOOLS_DIR/build/makefile-violation-scanner.sh"
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
     QSSI_ARGS="$QSSI_ARGS SKIP_ABI_CHECKS=$SKIP_ABI_CHECKS"
-    if [ -n "$LIST_TECH_PACKAGE" ]; then
-      command "run_qiifa_initialization"
-    fi
+    command "run_qiifa_initialization"
     command "make $QSSI_ARGS"
     command "run_qiifa"
 }
