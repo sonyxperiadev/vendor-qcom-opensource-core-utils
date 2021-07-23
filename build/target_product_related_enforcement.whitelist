@@ -1,8 +1,4 @@
 #For TARGET_PRODUCT check
-vendor/qcom/proprietary/commonsys/qvr/services/2dframework/Android.mk
-vendor/qcom/proprietary/commonsys/qvr/services/sxr/Android.mk
-vendor/qcom/proprietary/commonsys/qvr/clients/sxr/Android.mk
-vendor/qcom/proprietary/commonsys/scve-apps/reference/common.mk
 vendor/qcom/proprietary/commonsys-intf/QIIFA-fwk/identify-depencency/qiifa-identify-dependencies.py
 vendor/qcom/proprietary/commonsys-intf/QIIFA-fwk/qiifa_util/util.py
 vendor/qcom/proprietary/system_release/prebuiltmakegen.sh
@@ -11,8 +7,6 @@ vendor/qcom/proprietary/qvr-vndr/clients/sxr/Android.mk
 vendor/qcom/proprietary/qvr-vndr/services/2dframework/Android.mk
 vendor/qcom/proprietary/qvr-vndr/services/sxr/Android.mk
 vendor/qcom/proprietary/qvr-vndr/services/xrauxservice/Android.mk
-vendor/qcom/proprietary/common/
-device/qcom/common/utils.mk
 vendor/qcom/proprietary/prebuilt_HY11/
 vendor/qcom/proprietary/prebuilt_grease/
 vendor/qcom/proprietary/prebuilt_HY22/
