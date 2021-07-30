@@ -369,6 +369,16 @@ while IFS= read -r line; do
     eval $(echo "$line" | tr -d :)
 done < vendor/qcom/opensource/core-utils/build/makefile_violation_config.mk
 
+# Override enforcement flags set in makefile_violation_config.mk below.
+# This is useful to disable checks if the enforcement is not needed on
+# a particular target.
+ENFORCEMENT_OVERRIDE=device/qcom/$TARGET_PRODUCT/enforcement_override.mk
+if [ -f $ENFORCEMENT_OVERRIDE ]; then
+    while IFS= read -r line; do
+        eval $(echo "$line" | tr -d :)
+    done < $ENFORCEMENT_OVERRIDE
+fi
+
 FILES=`find ${subdir} -type f \( -iname '*.mk' -o -iname '*.sh' -o -iname '*.py' \)`
 for file in $FILES ; do
     array+=("$file")
