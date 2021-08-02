@@ -42,18 +42,28 @@ cnt_shell_error=0
 cnt_recursive_error=0
 cnt_rm_error=0
 cnt_datetime_error=0
+cnt_target_product_error=0
+cnt_is_product_in_list_error=0
+cnt_ro_build_product_error=0
+
 fnd_c_include=false
 fnd_add_dep=false
 fnd_shell_use=false
 fnd_recursive_use=false
 fnd_rm_use=false
 fnd_datetime_use=false
+fnd_target_product_use=false
+fnd_is_product_in_list_use=false
+fnd_ro_build_product_use=false
 
 kernel_array=()
 shell_array=()
 recursive_array=()
 rm_array=()
 datetime_array=()
+target_product_array=()
+is_product_in_list_array=()
+ro_build_product_array=()
 
 function reset_flags () {
     fnd_c_include=false
@@ -62,6 +72,9 @@ function reset_flags () {
     fnd_recursive_use=false
     fnd_rm_use=false
     fnd_datetime_use=false
+    fnd_target_product_use=false
+    fnd_is_product_in_list_use=false
+    fnd_ro_build_product_use=false
 }
 
 function print_violations () {
@@ -114,6 +127,36 @@ function print_violations () {
         done
         echo "-----------------------------------------------------"
     fi
+
+    if [[ ${#target_product_array[@]} -gt 0 ]]; then
+        echo "-----------------------------------------------------"
+        echo "cnt_target_product_error : $cnt_target_product_error"
+        echo "Warning: Using TARGET_PRODUCT in below makefiles. Please replace them with TARGET_BOARD_PLATFORM"
+        for i in "${target_product_array[@]}"; do
+            echo "    $i"
+        done
+        echo "-----------------------------------------------------"
+    fi
+
+    if [[ ${#is_product_in_list_array[@]} -gt 0 ]]; then
+        echo "-----------------------------------------------------"
+        echo "cnt_is_product_in_list_error : $cnt_is_product_in_list_error"
+        echo "Warning: Using is-product-in-list in below makefiles. Please replace them with is-board-platform-in-list"
+        for i in "${is_product_in_list_array[@]}"; do
+            echo "    $i"
+        done
+        echo "-----------------------------------------------------"
+    fi
+
+    if [[ ${#ro_build_product_array[@]} -gt 0 ]]; then
+        echo "-----------------------------------------------------"
+        echo "cnt_ro_build_product_error : $cnt_ro_build_product_error"
+        echo "Warning: Using ro.build.product in below makefiles. Please replace them with ro.board.platform"
+        for i in "${ro_build_product_array[@]}"; do
+            echo "    $i"
+        done
+        echo "-----------------------------------------------------"
+    fi
 }
 
 function check_if_error() {
@@ -136,6 +179,18 @@ function check_if_error() {
 
     if [[ "$fnd_datetime_use" == true ]]; then
         datetime_array+=("$1")
+    fi
+
+    if [[ "$fnd_target_product_use" == true ]]; then
+        target_product_array+=("$1")
+    fi
+
+    if [[ "$fnd_is_product_in_list_use" == true ]]; then
+        is_product_in_list_array+=("$1")
+    fi
+
+    if [[ "$fnd_ro_build_product_use" == true ]]; then
+        ro_build_product_array+=("$1")
     fi
 }
 
@@ -199,22 +254,80 @@ function check_datetime(){
     esac
 }
 
+function check_target_product_related(){
+    case $1 in
+    *\$\(TARGET_PRODUCT* | *\'TARGET_PRODUCT\'* | *\$TARGET_PRODUCT*)
+        fnd_target_product_use=true
+        cnt_target_product_error=$((cnt_target_product_error+1))
+        ;;&
+    *is-product-in-list*)
+        fnd_is_product_in_list_use=true
+        cnt_is_product_in_list_error=$((cnt_is_product_in_list_error+1))
+        ;;
+    *ro.build.product*)
+        fnd_ro_build_product_use=true
+        cnt_ro_build_product_error=$((cnt_ro_build_product_error+1))
+        ;;
+    esac
+}
+
+function is_in_whitelist(){
+    for element in ${array_target_product_related_whitelist[@]}; do
+        case $1 in
+        $element*)
+            return 1
+            ;;
+        esac
+    done
+    return 0
+}
+
 function scan_files(){
     for i in "${array[@]}"; do
-       while read line
-        do
-        case $line in
-        \#*)
-            continue
-            ;;
-        *)
-            check_kernel_dep "$line" "$i"
-            check_shell_use "$line"
-            check_recursive "$line"
-            check_rm "$line"
-            check_datetime "$line"
-        esac
-        done < $i
+       if [[ $i == *"Android.mk" ]]; then
+           if is_in_whitelist $i == 0; then
+                while read line; do
+                    case $line in
+                    \#*)
+                        continue
+                        ;;
+                    *)
+                        check_kernel_dep "$line" "$i"
+                        check_shell_use "$line"
+                        check_recursive "$line"
+                        check_rm "$line"
+                        check_datetime "$line"
+                        check_target_product_related "$line"
+                    esac
+                done < $i
+           else
+                while read line; do
+                    case $line in
+                    \#*)
+                        continue
+                        ;;
+                    *)
+                        check_kernel_dep "$line" "$i"
+                        check_shell_use "$line"
+                        check_recursive "$line"
+                        check_rm "$line"
+                        check_datetime "$line"
+                    esac
+                done < $i
+            fi
+       else
+            if is_in_whitelist $i == 0; then
+                while read line; do
+                    case $line in
+                    \#*)
+                        continue
+                        ;;
+                    *)
+                        check_target_product_related "$line"
+                    esac
+                done < $i
+            fi
+        fi
         check_if_error "$i" "$cnt_module"
         cnt_module=0
         reset_flags
@@ -233,6 +346,9 @@ function scan_files(){
         exit 1
     elif [[ "$BUILD_BROKEN_USES_DATETIME" != "true" && "$cnt_datetime_error" -gt 0 ]]; then
         exit 1
+    elif [[ "$BUILD_BROKEN_USES_TARGET_PRODUCT" != "true" &&
+        ("$cnt_target_product_error" -gt 0 || "$cnt_is_product_in_list_error" -gt 0 || "$cnt_ro_build_product_error" -gt 0 ) ]]; then
+        exit 1
     else
         exit 0
     fi
@@ -244,12 +360,23 @@ echo "      Checking \$(shell) usage ......"
 echo "      Checking recursive usage ......"
 echo "      Checking rm usage ......"
 echo "      Checking -Wno-error=date-time usage ......"
+echo "      Checking TARGET_PRODUCT usage ......"
+echo "      Checking is-product-in-list usage ......"
+echo "      Checking ro.build.product usage ......"
 echo "-----------------------------------------------------"
+
 while IFS= read -r line; do
     eval $(echo "$line" | tr -d :)
 done < vendor/qcom/opensource/core-utils/build/makefile_violation_config.mk
 
-while IFS=  read -r -d $'\0'; do
-    array+=("$REPLY")
-done < <(find ${subdir} -type f -name "Android.mk" -print0)
+FILES=`find ${subdir} -type f \( -iname '*.mk' -o -iname '*.sh' -o -iname '*.py' \)`
+for file in $FILES ; do
+    array+=("$file")
+done
+
+# Load whitelist files to ignore TARGET_PRODUCT/is-product-in-list/ro.build.product enforcement check
+while IFS= read -r line; do
+    array_target_product_related_whitelist+=("$line")
+done < vendor/qcom/opensource/core-utils/build/target_product_related_enforcement.whitelist
+
 scan_files
