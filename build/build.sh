@@ -285,6 +285,10 @@ for ARG in $QSSI_ARGS
 do
     if [ "$ARG" == "$DIST_COMMAND" ]; then
         DIST_ENABLED=true
+    elif [ "$ARG" == "BUILDING_WITH_VSDK=true" ]; then
+        BUILDING_WITH_VSDK=true
+    elif [[ "$ARG" == *"DISABLED_VSDK_SNAPSHOTS"* ]]; then
+        DISABLED_VSDK_SNAPSHOTS_ARG=$ARG
     elif [[ "$ARG" == *"--dp_images_path"* ]]; then
         DP_IMAGES_OVERRIDE=true
         DYNAMIC_PARTITIONS_IMAGES_PATH=$(${ECHO} "$ARG" | ${CUT} -d'=' -f 2)
@@ -292,6 +296,19 @@ do
         QSSI_ARGS_WITHOUT_DIST="$QSSI_ARGS_WITHOUT_DIST $ARG"
     fi
 done
+
+if [ "$BUILDING_WITH_VSDK" = true ]; then
+  TARGET_BUILD_UNBUNDLED_IMAGE_ARG="TARGET_BUILD_UNBUNDLED_IMAGE=true"
+  DISABLED_VSDK_SNAPSHOTS=(${DISABLED_VSDK_SNAPSHOTS_ARG//=/ })
+  IFS=',';for i in `echo "${DISABLED_VSDK_SNAPSHOTS[1]}"`;
+  do
+      if [ "$i" == "java" ]; then
+          TARGET_BUILD_UNBUNDLED_IMAGE_ARG=""
+      fi
+  done
+  QSSI_ARGS="$QSSI_ARGS $TARGET_BUILD_UNBUNDLED_IMAGE_ARG"
+  unset IFS;
+fi
 
 #Strip image_path if present
 if [ "$DP_IMAGES_OVERRIDE" = true ]; then
