@@ -131,7 +131,7 @@ function print_violations () {
     if [[ ${#target_product_array[@]} -gt 0 ]]; then
         echo "-----------------------------------------------------"
         echo "cnt_target_product_error : $cnt_target_product_error"
-        echo "Warning: Using TARGET_PRODUCT in below makefiles. Please replace them with TARGET_BOARD_PLATFORM"
+        echo "Error: Using TARGET_PRODUCT in below makefiles. Please replace them with TARGET_BOARD_PLATFORM"
         for i in "${target_product_array[@]}"; do
             echo "    $i"
         done
@@ -141,7 +141,7 @@ function print_violations () {
     if [[ ${#is_product_in_list_array[@]} -gt 0 ]]; then
         echo "-----------------------------------------------------"
         echo "cnt_is_product_in_list_error : $cnt_is_product_in_list_error"
-        echo "Warning: Using is-product-in-list in below makefiles. Please replace them with is-board-platform-in-list"
+        echo "Error: Using is-product-in-list in below makefiles. Please replace them with is-board-platform-in-list"
         for i in "${is_product_in_list_array[@]}"; do
             echo "    $i"
         done
@@ -151,7 +151,7 @@ function print_violations () {
     if [[ ${#ro_build_product_array[@]} -gt 0 ]]; then
         echo "-----------------------------------------------------"
         echo "cnt_ro_build_product_error : $cnt_ro_build_product_error"
-        echo "Warning: Using ro.build.product in below makefiles. Please replace them with ro.board.platform"
+        echo "Error: Using ro.build.product in below makefiles. Please replace them with ro.board.platform"
         for i in "${ro_build_product_array[@]}"; do
             echo "    $i"
         done
