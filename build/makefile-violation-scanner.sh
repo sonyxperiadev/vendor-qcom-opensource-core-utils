@@ -256,7 +256,7 @@ function check_datetime(){
 
 function check_target_product_related(){
     case $1 in
-    *\$\(TARGET_PRODUCT* | *\'TARGET_PRODUCT\'* | *\$TARGET_PRODUCT*)
+    *\$\(TARGET_PRODUCT\)* | *\$\{TARGET_PRODUCT\}* | *\'TARGET_PRODUCT\'* | *\"TARGET_PRODUCT\"* | *\$TARGET_PRODUCT*)
         fnd_target_product_use=true
         cnt_target_product_error=$((cnt_target_product_error+1))
         ;;&
