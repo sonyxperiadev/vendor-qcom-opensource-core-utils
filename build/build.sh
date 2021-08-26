@@ -80,6 +80,9 @@
 #     Supports uploading build data for analysis. It is enabled by default.
 #     Use options: --dca_disable To disable collecting build data.
 #     Usage: ./build.sh dist -j32 --dca_disable
+# Version 7:
+#     Supports rebuilding sepolicy with vendor side otatools.
+#     option : --rebuild_sepolicy_with_vendor_otatools=<path-to-vendor-otatools>
 #
 BUILD_SH_VERSION=5
 if [ "$1" == "--version" ]; then
@@ -285,17 +288,41 @@ for ARG in $QSSI_ARGS
 do
     if [ "$ARG" == "$DIST_COMMAND" ]; then
         DIST_ENABLED=true
+    elif [ "$ARG" == "BUILDING_WITH_VSDK=true" ]; then
+        BUILDING_WITH_VSDK=true
+    elif [[ "$ARG" == *"DISABLED_VSDK_SNAPSHOTS"* ]]; then
+        DISABLED_VSDK_SNAPSHOTS_ARG=$ARG
     elif [[ "$ARG" == *"--dp_images_path"* ]]; then
         DP_IMAGES_OVERRIDE=true
         DYNAMIC_PARTITIONS_IMAGES_PATH=$(${ECHO} "$ARG" | ${CUT} -d'=' -f 2)
+    elif [[ "$ARG" == *"--rebuild_sepolicy_with_vendor_otatools"* ]]; then
+        REBUILD_SEPOLICY=true
+        VENDOR_OTATOOLS=$(${ECHO} "$ARG" | ${CUT} -d'=' -f 2)
     else
         QSSI_ARGS_WITHOUT_DIST="$QSSI_ARGS_WITHOUT_DIST $ARG"
     fi
 done
 
+if [ "$BUILDING_WITH_VSDK" = true ]; then
+  TARGET_BUILD_UNBUNDLED_IMAGE_ARG="TARGET_BUILD_UNBUNDLED_IMAGE=true"
+  DISABLED_VSDK_SNAPSHOTS=(${DISABLED_VSDK_SNAPSHOTS_ARG//=/ })
+  IFS=',';for i in `echo "${DISABLED_VSDK_SNAPSHOTS[1]}"`;
+  do
+      if [ "$i" == "java" ]; then
+          TARGET_BUILD_UNBUNDLED_IMAGE_ARG=""
+      fi
+  done
+  QSSI_ARGS="$QSSI_ARGS $TARGET_BUILD_UNBUNDLED_IMAGE_ARG"
+  unset IFS;
+fi
+
 #Strip image_path if present
 if [ "$DP_IMAGES_OVERRIDE" = true ]; then
     QSSI_ARGS=${QSSI_ARGS//"--dp_images_path=$DYNAMIC_PARTITIONS_IMAGES_PATH"/}
+fi
+
+if [ "$REBUILD_SEPOLICY" = true ]; then
+    QSSI_ARGS=${QSSI_ARGS//"--rebuild_sepolicy_with_vendor_otatools=$VENDOR_OTATOOLS"/}
 fi
 
 # Check if dist is supported on this target (yet) or not, and override DIST_ENABLED flag.
@@ -413,6 +440,10 @@ function generate_ota_zip () {
 
     if [ "$ENABLE_AB" = false ]; then
         MERGE_TARGET_FILES_COMMAND="$MERGE_TARGET_FILES_COMMAND --rebuild_recovery"
+    fi
+
+    if [ "$REBUILD_SEPOLICY" = true ]; then
+        MERGE_TARGET_FILES_COMMAND="$MERGE_TARGET_FILES_COMMAND --rebuild-sepolicy --vendor-otatools=$VENDOR_OTATOOLS"
     fi
 
     command "$MERGE_TARGET_FILES_COMMAND"

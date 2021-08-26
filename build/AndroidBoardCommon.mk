@@ -65,6 +65,8 @@ LIBION_HEADER_PATH_WRAPPER := $(LOCAL_PATH)/libion_header_paths/libion_path.mk
 # Dump the status of various feature enforcements into a single file.
 include $(LOCAL_PATH)/configs_enforcement.mk
 include $(LOCAL_PATH)/makefile_violation_config.mk
+# Check if enforcement override exists and include it
+-include device/qcom/$(TARGET_PRODUCT)/enforcement_override.mk
 FEATURE_ENFORCEMENT_STATUS := $(PRODUCT_OUT)/configs/enforcement_status.txt
 $(FEATURE_ENFORCEMENT_STATUS):
 	rm -rf $@
