@@ -84,8 +84,6 @@ TARGET_OUT_DIST_ARTIFACTS = (
 
 TARGET_TARGET_FILES_ZIP = "-target_files-*.zip"
 
-TARGET_OTATOOLS_ZIP = "otatools.zip"
-
 # MERGED build's OUT_DIST OTA related artifacts that are optionally backed up
 # along with super.img via "--output_ota" arg (pattern supported):
 BACKUP_MERGED_OUT_DIST_ARTIFACTS = (
@@ -160,7 +158,6 @@ def fetch_build_artifacts(temp_dir, qssi_build_path, target_build_path,
   copy_pattern_items(qssi_build_path + "/" + OUT_DIST, temp_dir + "/" + OUT_DIST, QSSI_OUT_DIST_ARTIFACTS, "QSSI_OUT_DIST_ARTIFACTS")
   copy_pattern_items(qssi_build_path + "/" + OUT_DIST, temp_dir + "/" + OUT_DIST, (QSSI_TARGET_FILES_ZIP,), "QSSI_TARGET_FILES_ZIP", True)
   copy_pattern_items(target_build_path + "/" + OUT_DIST, temp_dir + "/" + OUT_DIST, TARGET_OUT_DIST_ARTIFACTS, "TARGET_OUT_DIST_ARTIFACTS")
-  copy_pattern_items(target_build_path + "/" + OUT_DIST, temp_dir + "/" + OUT_DIST + "/vendor/", (TARGET_OTATOOLS_ZIP,), "TARGET_OTATOOLS_ZIP")
   copy_pattern_items(target_build_path + "/" + OUT_DIST, temp_dir + "/" + OUT_DIST, (target_lunch + TARGET_TARGET_FILES_ZIP,), "TARGET_TARGET_FILES_ZIP", True)
   with ZipFile(temp_dir + "/" + OUT_DIST + BUILD_TOOLS_ZIP, 'r') as zipObj:
     zipObj.extractall(temp_dir)
@@ -277,7 +274,7 @@ def build_superimage(temp_dir, qssi_build_path, target_build_path,
   status = call(cmd)
 
   logging.info("Triggering Merge Process and generating merged-target-files, OTA zip and super.img...")
-  cmd = ["bash", "vendor/qcom/opensource/core-utils/build/build.sh", "dist", "-j16", "--merge_only", "--rebuild_sepolicy_with_vendor_otatools=out/dist/vendor/"+TARGET_OTATOOLS_ZIP]
+  cmd = ["bash", "vendor/qcom/opensource/core-utils/build/build.sh", "dist", "-j16", "--merge_only"]
   logging.info("Running: " + str(cmd))
   status = call(cmd)
 
