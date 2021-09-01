@@ -3,5 +3,3 @@ vendor/qcom/opensource/core-utils/build/QSSI_violators
 vendor/qcom/opensource/core-utils/build/build.sh
 vendor/qcom/opensource/core-utils/build/build_image_standalone.py
 vendor/qcom/opensource/core-utils/build/makefile-violation-scanner.sh
-vendor/qcom/proprietary/commonsys-intf/QIIFA-fwk/identify-depencency/qiifa-identify-dependencies.py
-vendor/qcom/proprietary/commonsys-intf/QIIFA-fwk/qiifa_util/util.py
