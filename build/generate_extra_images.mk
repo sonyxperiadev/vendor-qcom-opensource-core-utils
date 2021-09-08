@@ -20,6 +20,8 @@ INSTALLED_BOOTIMAGE_TARGET := $(BUILT_BOOTIMAGE_TARGET)
 ifeq ($(PRODUCT_BUILD_RAMDISK_IMAGE),true)
 INSTALLED_RAMDISK_TARGET := $(PRODUCT_OUT)/ramdisk.img
 endif
+endif
+
 ifeq ($(PRODUCT_BUILD_SYSTEM_IMAGE),true)
 INSTALLED_SYSTEMIMAGE := $(PRODUCT_OUT)/system.img
 endif
@@ -33,7 +35,6 @@ INSTALLED_RECOVERYIMAGE_TARGET :=
 endif
 recovery_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.img
 INSTALLED_USBIMAGE_TARGET := $(PRODUCT_OUT)/usbdisk.img
-endif
 
 #A/B builds require us to create the mount points at compile time.
 #Just creating it for all cases since it does not hurt.
@@ -68,7 +69,6 @@ $(PERSIST_MOUNT_POINT):
 #----------------------------------------------------------------------
 # Generate persist image (persist.img)
 #----------------------------------------------------------------------
-ifneq ($(strip $(TARGET_NO_KERNEL)),true)
 ifneq ($(strip $(BOARD_PERSISTIMAGE_PARTITION_SIZE)),)
 
 TARGET_OUT_PERSIST := $(PRODUCT_OUT)/persist
@@ -91,14 +91,11 @@ $(INSTALLED_PERSISTIMAGE_TARGET): $(MKEXTUSERIMG) $(MAKE_EXT4FS) $(INTERNAL_PERS
 
 ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_PERSISTIMAGE_TARGET)
 ALL_MODULES.$(LOCAL_MODULE).INSTALLED += $(INSTALLED_PERSISTIMAGE_TARGET)
-
-endif
 endif
 
 #----------------------------------------------------------------------
 # Generate device tree overlay image (dtbo.img)
 #----------------------------------------------------------------------
-ifneq ($(strip $(TARGET_NO_KERNEL)),true)
 ifeq ($(strip $(BOARD_KERNEL_SEPARATED_DTBO)),true)
 
 MKDTIMG := $(HOST_OUT_EXECUTABLES)/mkdtimg$(HOST_EXECUTABLE_SUFFIX)
@@ -128,7 +125,6 @@ endif
 
 ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_DTBOIMAGE_TARGET)
 ALL_MODULES.$(LOCAL_MODULE).INSTALLED += $(INSTALLED_DTBOIMAGE_TARGET)
-endif
 endif
 
 #----------------------------------------------------------------------
