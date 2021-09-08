@@ -17,9 +17,15 @@ endif
 
 INSTALLED_BOOTIMAGE_TARGET := $(BUILT_BOOTIMAGE_TARGET)
 
+ifeq ($(PRODUCT_BUILD_RAMDISK_IMAGE),true)
 INSTALLED_RAMDISK_TARGET := $(PRODUCT_OUT)/ramdisk.img
+endif
+ifeq ($(PRODUCT_BUILD_SYSTEM_IMAGE),true)
 INSTALLED_SYSTEMIMAGE := $(PRODUCT_OUT)/system.img
+endif
+ifeq ($(PRODUCT_BUILD_USERDATA_IMAGE),true)
 INSTALLED_USERDATAIMAGE_TARGET := $(PRODUCT_OUT)/userdata.img
+endif
 ifneq ($(TARGET_NO_RECOVERY), true)
 INSTALLED_RECOVERYIMAGE_TARGET := $(PRODUCT_OUT)/recovery.img
 else
@@ -63,6 +69,7 @@ $(PERSIST_MOUNT_POINT):
 # Generate persist image (persist.img)
 #----------------------------------------------------------------------
 ifneq ($(strip $(TARGET_NO_KERNEL)),true)
+ifneq ($(strip $(BOARD_PERSISTIMAGE_PARTITION_SIZE)),)
 
 TARGET_OUT_PERSIST := $(PRODUCT_OUT)/persist
 
@@ -85,6 +92,7 @@ $(INSTALLED_PERSISTIMAGE_TARGET): $(MKEXTUSERIMG) $(MAKE_EXT4FS) $(INTERNAL_PERS
 ALL_DEFAULT_INSTALLED_MODULES += $(INSTALLED_PERSISTIMAGE_TARGET)
 ALL_MODULES.$(LOCAL_MODULE).INSTALLED += $(INSTALLED_PERSISTIMAGE_TARGET)
 
+endif
 endif
 
 #----------------------------------------------------------------------
