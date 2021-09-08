@@ -80,6 +80,9 @@
 #     Supports uploading build data for analysis. It is enabled by default.
 #     Use options: --dca_disable To disable collecting build data.
 #     Usage: ./build.sh dist -j32 --dca_disable
+# Version 7:
+#     Supports rebuilding sepolicy with vendor side otatools.
+#     option : --rebuild_sepolicy_with_vendor_otatools=<path-to-vendor-otatools>
 #
 BUILD_SH_VERSION=5
 if [ "$1" == "--version" ]; then
@@ -292,6 +295,9 @@ do
     elif [[ "$ARG" == *"--dp_images_path"* ]]; then
         DP_IMAGES_OVERRIDE=true
         DYNAMIC_PARTITIONS_IMAGES_PATH=$(${ECHO} "$ARG" | ${CUT} -d'=' -f 2)
+    elif [[ "$ARG" == *"--rebuild_sepolicy_with_vendor_otatools"* ]]; then
+        REBUILD_SEPOLICY=true
+        VENDOR_OTATOOLS=$(${ECHO} "$ARG" | ${CUT} -d'=' -f 2)
     else
         QSSI_ARGS_WITHOUT_DIST="$QSSI_ARGS_WITHOUT_DIST $ARG"
     fi
@@ -313,6 +319,10 @@ fi
 #Strip image_path if present
 if [ "$DP_IMAGES_OVERRIDE" = true ]; then
     QSSI_ARGS=${QSSI_ARGS//"--dp_images_path=$DYNAMIC_PARTITIONS_IMAGES_PATH"/}
+fi
+
+if [ "$REBUILD_SEPOLICY" = true ]; then
+    QSSI_ARGS=${QSSI_ARGS//"--rebuild_sepolicy_with_vendor_otatools=$VENDOR_OTATOOLS"/}
 fi
 
 # Check if dist is supported on this target (yet) or not, and override DIST_ENABLED flag.
@@ -430,6 +440,10 @@ function generate_ota_zip () {
 
     if [ "$ENABLE_AB" = false ]; then
         MERGE_TARGET_FILES_COMMAND="$MERGE_TARGET_FILES_COMMAND --rebuild_recovery"
+    fi
+
+    if [ "$REBUILD_SEPOLICY" = true ]; then
+        MERGE_TARGET_FILES_COMMAND="$MERGE_TARGET_FILES_COMMAND --rebuild-sepolicy --vendor-otatools=$VENDOR_OTATOOLS"
     fi
 
     command "$MERGE_TARGET_FILES_COMMAND"
