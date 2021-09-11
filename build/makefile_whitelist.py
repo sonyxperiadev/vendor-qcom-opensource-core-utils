@@ -66,6 +66,24 @@ SHELL_WHITELIST = {
     "vendor/qcom/proprietary/wlan/utils/qsh_wifi_test/Android.mk",
     "vendor/qcom/proprietary/wigig/debug-tools/shell_11ad/Android.mk",
     "vendor/qcom/proprietary/ts_firmware-noship/holi/Android.mk",
+    "vendor/qcom/proprietary/vfw-vpu-20/Android.mk",
+    "vendor/qcom/proprietary/camx-lib/test/nativetest/nativechitest/common/build/android/Android.mk",
+    "vendor/qcom/proprietary/chi-cdk/core/chiframework/common/build/android/Android.mk",
+    "vendor/qcom/proprietary/camx/camx-qsee/qsee-utils/build/android/Android.mk",
+    "vendor/qcom/proprietary/camx/camx-qsee/qsee-aon/build/android/Android.mk",
+    "vendor/qcom/proprietary/video/noship/hfi-test/driver/Android.mk",
+    "vendor/qcom/proprietary/chi-cdk/api/generated/build/android/Android.mk",
+    "vendor/qcom/opensource/camera-kernel/Android.mk",
+    "vendor/qcom/opensource/video-driver/Android.mk",
+    "vendor/qcom/proprietary/camx-lib-stats/system/statsalgo/aecxcontrol/build/android/Android.mk",
+    "vendor/qcom/opensource/camera-kernel/include/uapi/Android.mk",
+    "vendor/qcom/proprietary/camx/src/mapperutils/formatmapper/build/android/Android.mk",
+    "vendor/qcom/proprietary/camx-lib-stats/system/statsalgo/af/build/android/Android.mk",
+    "vendor/qcom/proprietary/chi-cdk/oem/qcom/chiusecase/build/android/Android.mk",
+    "vendor/qcom/proprietary/camx-lib/system/statsalgo/awb/build/android/Android.mk",
+    "vendor/qcom/proprietary/camx/src/core/build/android/Android.mk",
+    "vendor/qcom/proprietary/camx/src/mapperutils/extformatutil/build/android/Android.mk",
+    "vendor/qcom/opensource/mmrm-driver/Android.mk",
 }
 
 RM_WHITELIST = {
@@ -84,6 +102,9 @@ DATETIME_WHITELIST = {
     "vendor/qcom/proprietary/qvr-vndr/tools/AnchorTest/Android.mk",
     "vendor/qcom/proprietary/qvr-vndr/tools/qvrdatalogger/Android.mk",
     "vendor/qcom/proprietary/qvr-vndr/tools/qvrdatacapture/Android.mk",
+    "vendor/qcom/proprietary/camx-lib/system/mfnr/build/android/Android.mk",
+    "vendor/qcom/proprietary/camx-lib/system/statsalgo/ubifocus/build/android/Android.mk",
+    "vendor/qcom/proprietary/camx-lib/system/cac3/build/android/Android.mk",
 }
 
 TARGET_PRODUCT_WHITELIST = {
