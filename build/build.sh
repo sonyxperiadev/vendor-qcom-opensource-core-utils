@@ -495,8 +495,8 @@ function build_qssi_only () {
 
 function build_target_only () {
     command "source build/envsetup.sh"
-    command "python -B $QTI_BUILDTOOLS_DIR/build/makefile-violation-scanner.py"
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
+    command "python -B $QTI_BUILDTOOLS_DIR/build/makefile-violation-scanner.py"
     QSSI_ARGS="$QSSI_ARGS SKIP_ABI_CHECKS=$SKIP_ABI_CHECKS"
     command "run_qiifa_initialization"
     command "make $QSSI_ARGS"
