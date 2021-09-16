@@ -84,7 +84,7 @@
 #     Supports rebuilding sepolicy with vendor side otatools.
 #     option : --rebuild_sepolicy_with_vendor_otatools=<path-to-vendor-otatools>
 #
-BUILD_SH_VERSION=5
+BUILD_SH_VERSION=7
 if [ "$1" == "--version" ]; then
     return $BUILD_SH_VERSION
     # Above return will work only if someone source'ed this script (which is expected, need to source the script).
