@@ -500,6 +500,9 @@ function build_target_only () {
     QSSI_ARGS="$QSSI_ARGS SKIP_ABI_CHECKS=$SKIP_ABI_CHECKS"
     command "run_qiifa_initialization"
     command "make $QSSI_ARGS"
+    if [ "$BUILDING_WITH_VSDK" = true ]; then
+        command "cp vendor/qcom/otatools_snapshot/otatools.zip out/dist/otatools.zip"
+    fi
     command "run_qiifa"
 }
 
