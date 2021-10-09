@@ -84,7 +84,7 @@
 #     Supports rebuilding sepolicy with vendor side otatools.
 #     option : --rebuild_sepolicy_with_vendor_otatools=<path-to-vendor-otatools>
 #
-BUILD_SH_VERSION=5
+BUILD_SH_VERSION=7
 if [ "$1" == "--version" ]; then
     return $BUILD_SH_VERSION
     # Above return will work only if someone source'ed this script (which is expected, need to source the script).
@@ -495,11 +495,14 @@ function build_qssi_only () {
 
 function build_target_only () {
     command "source build/envsetup.sh"
-    command "python -B $QTI_BUILDTOOLS_DIR/build/makefile-violation-scanner.py"
     command "lunch ${TARGET}-${TARGET_BUILD_VARIANT}"
+    command "python -B $QTI_BUILDTOOLS_DIR/build/makefile-violation-scanner.py"
     QSSI_ARGS="$QSSI_ARGS SKIP_ABI_CHECKS=$SKIP_ABI_CHECKS"
     command "run_qiifa_initialization"
     command "make $QSSI_ARGS"
+    if [ "$BUILDING_WITH_VSDK" = true ]; then
+        command "cp vendor/qcom/otatools_snapshot/otatools.zip out/dist/otatools.zip"
+    fi
     command "run_qiifa"
 }
 

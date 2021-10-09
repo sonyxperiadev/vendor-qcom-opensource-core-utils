@@ -84,6 +84,18 @@ SHELL_WHITELIST = {
     "vendor/qcom/proprietary/camx/src/core/build/android/Android.mk",
     "vendor/qcom/proprietary/camx/src/mapperutils/extformatutil/build/android/Android.mk",
     "vendor/qcom/opensource/mmrm-driver/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_grease/target/product/qssi/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_grease/target/product/taro/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_grease/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY11/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY11/target/product/qssi/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY11/target/product/taro/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY22/target/product/qssi/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY22/target/product/taro/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY22/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY33/target/product/qssi/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY33/target/product/taro/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY33/Android.mk",
 }
 
 RM_WHITELIST = {
@@ -96,6 +108,18 @@ RM_WHITELIST = {
 LOCAL_COPY_HEADERS_WHITELIST = {
     "vendor/qcom/proprietary/common/config/Android.mk",
     "vendor/qcom/proprietary/peripheral-manager/libpmclient/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_grease/target/product/qssi/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_grease/target/product/taro/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_grease/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY11/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY11/target/product/qssi/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY11/target/product/taro/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY22/target/product/qssi/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY22/target/product/taro/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY22/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY33/target/product/qssi/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY33/target/product/taro/Android.mk",
+    "vendor/qcom/proprietary/prebuilt_HY33/Android.mk",
 }
 
 DATETIME_WHITELIST = {
