@@ -319,6 +319,8 @@ def main():
 
   if args.target_lunch.endswith("_32go"):
     QSSI_TARGET="qssi_32go"
+  elif args.target_lunch.endswith("_lily"):
+    QSSI_TARGET="qssi_32go"
   elif args.target_lunch.endswith("_32"):
     QSSI_TARGET="qssi_32"
   else:
