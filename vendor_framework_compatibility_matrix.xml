@@ -807,6 +807,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <interface>
             <name>IEvsEnumerator</name>
             <instance>default</instance>
+            <instance>hw/1</instance>
         </interface>
      </hal>
      <hal format="hidl" optional="true">
