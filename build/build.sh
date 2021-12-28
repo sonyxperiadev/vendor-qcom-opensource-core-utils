@@ -450,6 +450,10 @@ function generate_ota_zip () {
         MERGE_TARGET_FILES_COMMAND="$MERGE_TARGET_FILES_COMMAND --rebuild-sepolicy --vendor-otatools=$VENDOR_OTATOOLS"
     fi
 
+    if [[ "$FULL_BUILD" -eq 1 ]]; then
+        MERGE_TARGET_FILES_COMMAND="$MERGE_TARGET_FILES_COMMAND --rebuild-sepolicy --vendor-otatools=$DIST_DIR/otatools.zip"
+    fi
+
     command "$MERGE_TARGET_FILES_COMMAND"
 }
 
@@ -533,6 +537,11 @@ function full_build () {
         command "cp $QSSI_OUT/system_ext.img $OUT/"
     fi
     merge_only
+
+    if [ "$BOARD_DYNAMIC_PARTITION_ENABLE" = false ]; then
+        command "unzip -jo -DD $MERGED_TARGET_FILES IMAGES/*.img -x IMAGES/userdata.img -d $OUT"
+    fi
+
 }
 
 function nonqssi_legacy_build () {
