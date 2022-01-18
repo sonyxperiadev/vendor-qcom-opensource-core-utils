@@ -311,16 +311,10 @@ do
 done
 
 if [ "$BUILDING_WITH_VSDK" = true ]; then
-  TARGET_BUILD_UNBUNDLED_IMAGE_ARG="TARGET_BUILD_UNBUNDLED_IMAGE=true"
-  DISABLED_VSDK_SNAPSHOTS=(${DISABLED_VSDK_SNAPSHOTS_ARG//=/ })
-  IFS=',';for i in `echo "${DISABLED_VSDK_SNAPSHOTS[1]}"`;
-  do
-      if [ "$i" == "java" ]; then
-          TARGET_BUILD_UNBUNDLED_IMAGE_ARG=""
-      fi
-  done
-  QSSI_ARGS="$QSSI_ARGS $TARGET_BUILD_UNBUNDLED_IMAGE_ARG"
-  unset IFS;
+  if [ -f  vendor/qcom/vsdk_snapshots_config/java_snapshot_enabled ]; then
+      TARGET_BUILD_UNBUNDLED_IMAGE_ARG="TARGET_BUILD_UNBUNDLED_IMAGE=true"
+      QSSI_ARGS="$QSSI_ARGS $TARGET_BUILD_UNBUNDLED_IMAGE_ARG"
+  fi
 fi
 
 #Strip image_path if present
